@@ -85,7 +85,8 @@ public class Token {
     public final int getLength() {
         return length;
     }
-
+    
+    /** Returns token's text */
     public final String getText(){
         return text;
     }
