@@ -52,4 +52,13 @@ public class CollectPP {
         System.out.println(Arrays.toString(ppdict.keySet().toArray()));
         
     }
+    /**
+     * Delete all the mappings , the dictionary will be empty after this operation
+     */
+    void delete(){
+        if(ppdict.isEmpty()){
+            System.err.print("Can't delete ppdict , already empty!!!");
+        }
+        else ppdict.clear();
+    }
 }

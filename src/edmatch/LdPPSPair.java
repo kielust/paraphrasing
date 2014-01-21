@@ -11,12 +11,30 @@ import java.util.ArrayList;
  * @author rohit
  */
 public class LdPPSPair {
-    Token [][]alt;
-    short score;
-    ArrayList<PPPair> pppair;
-    LdPPSPair(Token[][] alt,short score,ArrayList<PPPair> pppair){
+    private final Token[] alt;
+    private final short score;
+    private final ArrayList<PPPair> pppair;
+    private final short length;
+    LdPPSPair(Token[] alt,short length,short score,ArrayList<PPPair> pppair){
         this.alt=alt;
         this.score=score;
         this.pppair=pppair;
+        this.length=length;
+    }
+    
+    short getEditDistance(){
+        return score;
+    }
+    ArrayList<PPPair> getMatchedParaphrases(){
+        return pppair;
+    }
+    Token[] getSentence(){
+        return alt;
+    }
+    Token getTokenAt(short index){
+        return alt[index];
+    }
+    short length(){
+        return length;
     }
 }

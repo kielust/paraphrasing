@@ -18,8 +18,31 @@ import java.util.Arrays;
  */
 public class SentencePP {
     private ExtToken [] extsentence;
+    private static final  int LIMIT=100;  // limit on maximum paraphrases per token
     SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict){
         extsentence=new ExtToken[sentence.length];
+        for(int i=0;i<sentence.length;i++){
+            String src="";
+            ArrayList<Paraphrase> alpp=new ArrayList();                    
+            for(int j=i;j<sentence.length;j++){
+                src=src+" "+sentence[j].getText();
+                src=src.trim();
+                if(ppdict.containsKey(src)){
+                    ArrayList<String> als=ppdict.get(src);
+                    for(String s:als){
+                        Paraphrase pp=new Paraphrase(src,s,i);
+                        alpp.add(pp);
+                    }
+                }
+            }
+            ExtToken exttk=new ExtToken(sentence[i],alpp);
+            extsentence[i]=exttk;
+        }
+    }
+    
+    SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict,boolean flag ){
+        extsentence=new ExtToken[sentence.length];
+        Paraphrase [][]aap=new Paraphrase[sentence.length][LIMIT];
         for(int i=0;i<sentence.length;i++){
             String src="";
             ArrayList<Paraphrase> alpp=new ArrayList();                    

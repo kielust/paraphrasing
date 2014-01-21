@@ -11,6 +11,7 @@
  */
 package edmatch;
 import java.util.ArrayList;
+import java.util.LinkedList;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -29,7 +30,7 @@ public class LevenshteinDistancePP  {
     private static final int MAX_N = 1000;
     /** Maximum number of paraphrases handled for per token */
     private static final int MAX_PP = 200;
-
+    private  final short MAX_OFFSET=50;
     /**
      * Cost array, horizontally. Here to avoid excessive allocation and garbage
      * collection.
@@ -40,7 +41,7 @@ public class LevenshteinDistancePP  {
      * and garbage collection.
      */
     private short[][] p = new short[MAX_PP][MAX_N + 1];
-
+    
     /*private short getMaxindex(short a,short b, short c, short d){
      if(a>=b && a>=c && a>=d)return 1;
      if(b>=a && b>=c && b>=d)return 2;
@@ -110,7 +111,10 @@ public class LevenshteinDistancePP  {
             n = MAX_N-1;
         if (m > MAX_N)
             m = MAX_N-1;
-        Token [][]targetsentencematch=new Token[MAX_PP][m];
+        Token [][]targetsentencematch=new Token[MAX_PP][m+MAX_OFFSET];
+        //ArrayList<ArrayList<Token> > targetsentencematch= new ArrayList<ArrayList<Token> >();
+       //        LinkedList<LinkedList<Token>> targetsentencematch=new LinkedList<LinkedList<Token> >();
+
         short[][] swap; // placeholder to assist in swapping p and d
         // indexes into strings s and t
         short i; // iterates through s
@@ -128,6 +132,8 @@ public class LevenshteinDistancePP  {
         ArrayList<Paraphrase> alpp=new ArrayList();
         
         ArrayList<PPPair> ppusedinsentence=new ArrayList();
+        short offset[]=new short[MAX_PP];    //paraphrase offset to handle diff in src and pp length
+        short p_off_j=0;
         for (j = 1; j <= m; j++) {
             t_j = t[j - 1];
             for(int k=0;k<MAX_PP;k++)
@@ -142,31 +148,41 @@ public class LevenshteinDistancePP  {
             }else if(true==flag)maxtscount++;
             
             for(int pind=0;pind<noiter;pind++){
-                Token t_jp = null;
-                if(pind>0 && t_jpext.al.get(pind-1).haspptokenAtIndex(maxtscount-1)){
+                Token t_jp;
+                if(pind>0){
+                    if(t_jpext.al.get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
+                        if(t_jpext.al.get(pind-1).hasSrctokenAtIndex(maxtscount-1)){ //src && pp both have token
                     t_jp=t_jpext.al.get(pind-1).getpptokenAtIndex(maxtscount-1);
-                  targetsentencematch[pind][j-1]=t_jp;
+                        }else{                  //pp has token but src dont have,increase in length pp>src
+                         offset[pind]++;
+                         t_jp=t_jpext.al.get(pind-1).getpptokenAtIndex(maxtscount-1);
+                        }
+                    }else{     //pind>0 and pp dont have token, take help from offset
+                    t_jp=t[j-1-offset[pind]].getToken();
+                    }
                 }else{
-                t_jp=t_j.tk;
-                  targetsentencematch[pind][j-1]=t_jp;
+                t_jp=t_j.getToken();
                 }
                 Token s_i = null; // ith object of s
-                for (i = 1; i <= n; i++) {
+               targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculattion of edit distance
+             for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
                     // minimum of cell to the left+1, to the top+1, diagonally left
                     // and up +cost
-                    if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost);
-                    else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);
+                    if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost); //use p of basic 
+                    else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
                 }
             }
             if((maxts!=0 )&& (maxts==maxtscount)){
                 int ind=0;
                 int mindistance=d[0][j];
-                for(int mind=0;mind<noiter;mind++){
-                    if(d[mind][j]<mindistance){
-                        mindistance=d[mind][j];
-                        ind=mind;
+                short offset_j=0;
+                for(int pind=1;pind<noiter;pind++){
+                    if(d[pind][j]<d[0][j-offset[pind]] && d[pind][j]<mindistance){
+                        mindistance=d[pind][j];
+                        ind=pind;
+                        offset_j=offset[pind];
                     }
                 }
                 if(ind!=0){
@@ -176,12 +192,17 @@ public class LevenshteinDistancePP  {
                     Paraphrase pp=alpp.get(ind-1);
                     PPPair pppair=new PPPair(pp,j-maxts); 
                     ppusedinsentence.add(pppair);
-                    for(int k=j-maxts,l=0;k<j && l<pp.lensrcpp;k++,l++){
+                    for(int k=j+p_off_j-maxts;k<j+p_off_j;k++){
+                       // Token temp=targetsentencematch.get(ind).get(k);
                         targetsentencematch[0][k]=targetsentencematch[ind][k];
                     }
+                    j=(short) (j-offset_j);
+                    p_off_j+=offset_j;
                 }
                 maxtscount=1;
                 flag=false;
+                offset=new short[MAX_PP];
+                
             }
             // copy current distance counts to 'previous row' distance counts
             swap = p;
@@ -191,7 +212,7 @@ public class LevenshteinDistancePP  {
         // our last action in the above loop was to switch d and p, so p now
         // actually has the most recent cost counts
         LdPPSPair ldpair;
-        ldpair=new LdPPSPair(targetsentencematch,p[0][n],ppusedinsentence);
+        ldpair=new LdPPSPair(targetsentencematch[0],(short)(m+p_off_j),p[0][n],ppusedinsentence);
         return ldpair;
     }
 }

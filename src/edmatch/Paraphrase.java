@@ -53,4 +53,8 @@ public class Paraphrase {
     boolean haspptokenAtIndex(int index){
         return (index>=0 && index<lensrcpp);        
     }
+    boolean hasSrctokenAtIndex(int index){
+        return (index>=0 && index<lensrc);        
+    }
+  
 }
