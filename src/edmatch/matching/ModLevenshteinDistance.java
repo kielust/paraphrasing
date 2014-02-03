@@ -4,7 +4,9 @@
  * and open the template in the editor.
  */
 
-package edmatch;
+package edmatch.matching;
+
+import edmatch.data.ExtToken;
 
 
 /**

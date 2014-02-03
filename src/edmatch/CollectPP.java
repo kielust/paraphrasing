@@ -12,7 +12,7 @@ package edmatch;
  */
 import java.util.Scanner;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 public class CollectPP {
     HashMap<String,ArrayList<String> > ppdict=new HashMap();
+   static final private  int LIMIT=50; //max allowed paraphases of a phrase 
     CollectPP(String filename){
         try{
             File file=new File(filename);
@@ -31,13 +32,13 @@ public class CollectPP {
                 ArrayList<String> right=new ArrayList();
                 if (ppdict.containsKey(left)){
                     right=ppdict.get(left);
-                     if(right.size()<50 &&(!(right.contains(strtokens[2].trim())))){
+                     if(right.size()<LIMIT &&(!(right.contains(strtokens[2].trim())))){
                          right.add(strtokens[2].trim());
                     }
                 }else right.add(strtokens[2].trim());
                 ppdict.put(left,right);
             }
-        }catch(IOException e){
+        }catch(FileNotFoundException e){
             System.err.print("Error opening paraphrase file"+e);
         }
     }

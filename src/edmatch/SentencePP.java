@@ -6,6 +6,9 @@
 
 package edmatch;
 
+import edmatch.data.Paraphrase;
+import edmatch.data.ExtToken;
+import edmatch.data.Token;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Arrays;
@@ -95,7 +98,7 @@ public class SentencePP {
         SentencePP spp=new SentencePP(tk,ppdict);
         ExtToken []etk=spp.get();
         for(int i=0;i<5;i++){
-            String tktext=etk[i].tk.getText();
+            String tktext=etk[i].getToken().getText();
             for(int j=0;j<etk[i].getpplist().size();j++){
             String tkparaleft=etk[i].getpplist().get(j).getleft();
             String tkpararight=etk[i].getpplist().get(j).getright();

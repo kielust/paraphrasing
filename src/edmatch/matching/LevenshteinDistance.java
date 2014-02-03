@@ -9,7 +9,10 @@
  * @author rohit
  * 
  */
-package edmatch;
+package edmatch.matching;
+
+import edmatch.data.Token;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates

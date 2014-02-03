@@ -1,20 +1,21 @@
 
-package edmatch;
+package edmatch.data;
 import java.util.ArrayList;
 
-class ExtToken{
+public class ExtToken{
 
     Token tk;
     ArrayList<Paraphrase> al= new ArrayList();
-    ExtToken(Token tk, ArrayList<Paraphrase> al){
+    //ArrayList<hash> al2=new ArrayList();
+   public ExtToken(Token tk, ArrayList<Paraphrase> al){
         this.tk=tk;
         this.al=al;
     }
-    ExtToken(Token tk){
+  public ExtToken(Token tk){
         this.tk=tk;
         al=null; //no paraphrase exists
     }
-    ExtToken(){
+   public ExtToken(){
         tk=null;
         al=null;
     }
@@ -22,13 +23,13 @@ class ExtToken{
         al.add(pp);
         return al.size();
     }
-    ArrayList<Paraphrase> getpplist(){
+   public ArrayList<Paraphrase> getpplist(){
         return al;
     }
-    Token getToken(){
+   public Token getToken(){
         return tk;
     }
-    void print(){
+   public void print(){
         System.out.print(tk.getText());
         for(Paraphrase p:al){
             System.out.print(p.lensrc+" "+p.getleft()+" "+p.lensrcpp+" "+p.getright());

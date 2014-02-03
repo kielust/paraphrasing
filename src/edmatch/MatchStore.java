@@ -6,6 +6,7 @@
 
 package edmatch;
 
+import edmatch.data.Token;
 import java.util.ArrayList;
 
 /**

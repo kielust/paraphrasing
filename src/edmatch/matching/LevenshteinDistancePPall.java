@@ -9,15 +9,19 @@
  * @author rohit
  * 
  */
-package edmatch;
+package edmatch.matching;
+import edmatch.data.ExtToken;
+import edmatch.data.LdPPSPair;
+import edmatch.data.PPPair;
+import edmatch.data.Paraphrase;
+import edmatch.data.Token;
 import java.util.ArrayList;
-import java.util.LinkedList;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistancePP  {
+public class LevenshteinDistancePPall  {
 
     /**
      * Get minimum of three values
@@ -36,12 +40,15 @@ public class LevenshteinDistancePP  {
      * collection.
      */
     private short[][] d = new short[MAX_PP][MAX_N + 1];
+        private short[][] tempd = new short[MAX_PP][MAX_N + 1];
+
     /**
      * "Previous" cost array, horizontally. Here to avoid excessive allocation
      * and garbage collection.
      */
     private short[][] p = new short[MAX_PP][MAX_N + 1];
-    
+        private short[][] tempp = new short[MAX_PP][MAX_N + 1];
+
     /*private short getMaxindex(short a,short b, short c, short d){
      if(a>=b && a>=c && a>=d)return 1;
      if(b>=a && b>=c && b>=d)return 2;
@@ -89,8 +96,8 @@ public class LevenshteinDistancePP  {
     int getmaxtargetsize(ArrayList<Paraphrase> p){
         int max=0;
         for(int i=0;i<p.size();i++){
-            if(p.get(i).lensrcpp>max)
-                max=p.get(i).lensrcpp;
+            if(p.get(i).noOfWordsSrcPP()>max)
+                max=p.get(i).noOfWordsSrcPP();
         }
         return max;
     }
@@ -115,12 +122,12 @@ public class LevenshteinDistancePP  {
         //ArrayList<ArrayList<Token> > targetsentencematch= new ArrayList<ArrayList<Token> >();
        //        LinkedList<LinkedList<Token>> targetsentencematch=new LinkedList<LinkedList<Token> >();
 
-        short[][] swap; // placeholder to assist in swapping p and d
+        short [][] swap; // placeholder to assist in swapping p and d
         // indexes into strings s and t
         short i; // iterates through s
         short j; // iterates through t
-        ExtToken t_j = null; // jth object of t
-        ExtToken t_jpext=null;
+        ExtToken t_j ;//= null; // jth object of t
+        ExtToken t_jpext=new ExtToken();
         short cost; // cost
 
         for (i = 0; i <= n; i++)
@@ -145,17 +152,18 @@ public class LevenshteinDistancePP  {
             alpp=t_j.getpplist();
             noiter=1+t_j.getpplist().size();
             t_jpext=t_j;            
+            System.out.println("noiter="+noiter+" maxts="+maxts);
             }else if(true==flag)maxtscount++;
             
             for(int pind=0;pind<noiter;pind++){
                 Token t_jp;
                 if(pind>0){
-                    if(t_jpext.al.get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
-                        if(t_jpext.al.get(pind-1).hasSrctokenAtIndex(maxtscount-1)){ //src && pp both have token
-                    t_jp=t_jpext.al.get(pind-1).getpptokenAtIndex(maxtscount-1);
+                    if(t_jpext.getpplist().get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
+                        if(t_jpext.getpplist().get(pind-1).hasSrctokenAtIndex(maxtscount-1)){ //src && pp both have token
+                    t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
                         }else{                  //pp has token but src dont have,increase in length pp>src
                          offset[pind]++;
-                         t_jp=t_jpext.al.get(pind-1).getpptokenAtIndex(maxtscount-1);
+                         t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
                         }
                     }else{     //pind>0 and pp dont have token, take help from offset
                     t_jp=t[j-1-offset[pind]].getToken();
@@ -163,7 +171,7 @@ public class LevenshteinDistancePP  {
                 }else{
                 t_jp=t_j.getToken();
                 }
-                Token s_i = null; // ith object of s
+                Token s_i;// = null; // ith object of s
                targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculattion of edit distance
              for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
@@ -174,17 +182,27 @@ public class LevenshteinDistancePP  {
                     else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
                 }
             }
+            if(maxts!=0 && maxtscount==1){
+                tempp=p;
+                tempd=d;
+            }
             if((maxts!=0 )&& (maxts==maxtscount)){
                 int ind=0;
                 int mindistance=d[0][j];
                 short offset_j=0;
                 for(int pind=1;pind<noiter;pind++){
-                    if(d[pind][j]<d[0][j-offset[pind]] && d[pind][j]<mindistance){
+                //    if(d[pind][j]<d[0][j-offset[pind]] && d[pind][j]<mindistance){
+                     if(d[pind][j]<d[0][j] && d[pind][j]<mindistance){
                         mindistance=d[pind][j];
                         ind=pind;
                         offset_j=offset[pind];
                     }
                 }
+                maxtscount=1;
+                flag=false;
+                offset=new short[MAX_PP];
+                
+                
                 if(ind!=0){
                     for(int k=0;k<=n;k++){
                         d[0][k]=d[ind][k];
@@ -192,16 +210,15 @@ public class LevenshteinDistancePP  {
                     Paraphrase pp=alpp.get(ind-1);
                     PPPair pppair=new PPPair(pp,j-maxts); 
                     ppusedinsentence.add(pppair);
-                    for(int k=j+p_off_j-maxts;k<j+p_off_j;k++){
-                       // Token temp=targetsentencematch.get(ind).get(k);
-                        targetsentencematch[0][k]=targetsentencematch[ind][k];
-                    }
+                    System.arraycopy(targetsentencematch[ind], j+p_off_j-maxts, targetsentencematch[0], j+p_off_j-maxts, j+p_off_j - (j+p_off_j-maxts));
                     j=(short) (j-offset_j);
                     p_off_j+=offset_j;
+                }else if(d[0][j]!=0){
+                    p=tempp;
+                    d=tempd;
+                    j=(short)(j-maxts+1);
+                    continue;
                 }
-                maxtscount=1;
-                flag=false;
-                offset=new short[MAX_PP];
                 
             }
             // copy current distance counts to 'previous row' distance counts

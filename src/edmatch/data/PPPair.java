@@ -4,16 +4,16 @@
  * and open the template in the editor.
  */
 
-package edmatch;
+package edmatch.data;
+
+import edmatch.data.Paraphrase;
 
 /**
  *
  * @author rohit
  */
-class PPPair{
-        private Paraphrase paraphrase;
-        private int location;
-            PPPair(Paraphrase paraphrase,int location){
+public class PPPair{
+           public PPPair(Paraphrase paraphrase,int location){
             this.paraphrase=paraphrase;
             this.location=location;
             }
@@ -23,4 +23,7 @@ class PPPair{
          public int getLocation(){
              return location;
          }
+         private Paraphrase paraphrase;
+        private int location;
+        
         }
