@@ -15,6 +15,9 @@ import edmatch.matching.LevenshteinDistance;
 import edmatch.matching.LevenshteinDistancePP;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.*;
+import java.util.Comparator;
 import java.lang.Exception;
 import java.io.IOException;
 import java.util.HashMap;
@@ -55,7 +58,9 @@ public class EDMatch {
      */
     public static double calcSimilarityPP(int str,int cand, int score
             ) {
+        
         double similarity = (100.0 * (Math.max(str, cand) - score)) / Math.max(str, cand);
+        System.out.println("ED:"+score+"Sim:"+similarity+" input:"+str+" Match:"+cand);
         return similarity;
     }
     
@@ -72,6 +77,173 @@ public class EDMatch {
         System.out.println();
     }
     
+    
+            /*class SIM_SORT implements Comparator<match>{
+                @Override
+                public int compare(match m1, match m2){
+                    if(m1.sim <m2.sim) return -1;
+                    if(m1.sim>m2.sim) return 1;
+                    return 0;
+                }
+            }*/
+    /**
+     * extract matches in two steps 
+     * step1: find matches using simple edit distance
+     * step2: Apply paraphrasing to matches find from step 1
+     * @param th threshold for step 1 filtering using edit distance
+     * @param max filtering too many extracted using simple edit distance
+     * @param flag type of paraphrasing '-p' or '-pa' 
+     * @param inputtokens user input file tokens
+     * @param tmsrctokens tm source tokens
+     * @param tgtTM   tm target tokens
+     * @param tgtinput expected target for user input file
+     * @param outfile  output file in xml format 
+     * @return 
+    */
+    
+    static ArrayList<MatchStore>  extractMatch(HashMap<String, ArrayList<String> > ppdict,double th,int max, char flag, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<String> tgtTM, ArrayList<String> tgtinput, String outfile){
+        ArrayList<MatchStore> listms=new ArrayList();
+        
+     
+            class match implements Comparable<match> {
+                double sim;
+                int index;
+                match(double sim,int index){
+                    this.sim=sim;
+                    this.index=index;
+                }
+                @Override
+                public int compareTo(match other){
+                    return Double.valueOf(this.sim).compareTo(other.sim);
+                }
+                
+            }
+    
+            
+        try{
+            FileWriter fw = new FileWriter(outfile);
+                int sno=-1;
+                fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+                fw.write("<document>");
+                
+                for(Token [] sen:inputtokens){
+                    //   MatchStore m=new MatchStore(sen);
+                    sno++;
+                    System.out.print("Executing->"+sno+" :");
+                    printtokens(sen);
+                    
+                    //double maxsim=0.0;
+                    //int maxmatchid=0;
+                    int index=0;
+                    List<match> thmatches=new ArrayList();
+                    for(Token [] tmsen:tmsrctokens){
+                        double sim=calcSimilarity(tmsen, sen);
+                        // printtokens(tmsen);
+                        // printtokens(sen);
+                        //  System.out.println(" SIM:"+sim);
+                        if(th<sim){
+                            thmatches.add(new match(sim,index));
+                            
+                        }
+                        index++;
+                        
+                    }
+                    Collections.sort(thmatches);
+                    Collections.reverse(thmatches);
+                    ArrayList<SentencePP> topmatches=new ArrayList();
+                    for(int i=0;i<max;i++){
+                        match m=thmatches.get(i);
+                        SentencePP spp=new SentencePP(tmsrctokens.get(m.index),ppdict);
+                        topmatches.add(spp);
+                    }
+                    
+                    double maxsim=0.0;
+                    int maxmatchid=0;
+                    LdPPSPair bestmatch=null;
+                    index=0;
+                    //System.out.print("Processing:");
+                    int tmsno=0;
+                    for(SentencePP tmsen:topmatches){
+                        // double sim=calcSimilarity(tmsen.get(), sen);
+                        //System.out.println("tmsen:");
+                        //tmsen.print();
+                        System.out.print(++tmsno+"=");
+                        LdPPSPair ldpair;
+                        double sim;
+                        if(flag=='a'){
+                            LevenshteinDistancePP dc= new LevenshteinDistancePP();
+                            ldpair = dc.compute(sen,tmsen.get());
+                            if(ldpair==null)continue;
+                            sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
+                        }else {
+                            LevenshteinDistancePPall dc= new LevenshteinDistancePPall();
+                            ldpair = dc.compute(sen,tmsen.get());
+                            if(ldpair==null)continue;
+                            sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());                        
+                        }
+                        // printtokens(tmsen);
+                        // printtokens(sen);
+                        //  System.out.println(" SIM:"+sim);
+                        if(maxsim<sim){
+                            maxsim=sim;
+                            maxmatchid=index;
+                            bestmatch=ldpair;
+                        }
+                        /* if(sim>TH){
+                        m.add(tmsen);
+                        fw.write(sim+" ||| ");
+                        for(int i=0;i<tmsen.length;i++)
+                        fw.write(tmsen[i].getText()+" ");
+                        fw.write("\n");
+                        }*/
+                        index++;
+                        
+                    }                    
+                    
+                    fw.write("<segment id=\""+sno+"\">");
+                    for (Token sen1 : sen) {
+                        fw.write(sen1.getText() + " ");
+                    }
+                    fw.write('\n');
+                    fw.write("<exptd>");
+                    fw.write(tgtinput.get(sno));
+                    fw.write("</exptd>\n");
+                    String ms=Math.round(maxsim*100.0)/100.0 + "";
+                    fw.write("<match score=\""+ms+"\" prevrank=\""+maxmatchid+"\">");
+                    //Token [] bestmatch=tmsrctokens.get(maxmatchid);
+                    for (short i=0;i<bestmatch.length();i++) {
+                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
+                    }
+                    fw.write("</match>\n");
+                    fw.write("<paraphrases>");
+                    for(PPPair item : bestmatch.getMatchedParaphrases()){
+                        fw.write("<pp index=\"");
+                        fw.write(item.getLocation()+"\""+" text=\""+item.getParaphrase().getleft()+"\" "+"para=\""+item.getParaphrase().getright()+"\"");
+                        fw.write("/>");
+                    }
+                    fw.write("</paraphrases>\n");
+                    fw.write("<retvd lang=\"FR\">");
+                    String french=tgtTM.get(maxmatchid);
+                    fw.write(french);fw.write("</retvd>\n");
+                    fw.write("<retvd lang=\"EN\" id=\""+thmatches.get(maxmatchid).index+"\">");
+                            SentencePP spp=topmatches.get(maxmatchid);
+                            ExtToken [] english=spp.get();
+                    for(ExtToken extk:english){
+                        fw.write(extk.getToken().getText()+" ");
+                    }
+                    fw.write("</retvd>\n");
+                    fw.write("</segment>\n");               
+                    
+                }
+                   fw.write("</document>");
+                   fw.close();
+            
+            }catch(IOException e){
+                System.err.print(e);
+            }
+        return listms;
+    }
+
     /**
      * extract matches without paraphrasing
      * @param inputtokens user input file tokens
@@ -358,7 +530,7 @@ public class EDMatch {
         ppdict.clear();
       //  cpp.delete();
         System.out.println("alspp finished");
-        alspp.get(200).print();
+        //alspp.get(200).print();
         System.out.println();
         ReadTargetFile rtf2=new ReadTargetFile(inputtgtfilename);
         ArrayList<String> tgtinput=rtf2.get(); 
@@ -377,19 +549,28 @@ public class EDMatch {
     
     public static void main(String[] args) {
       //  double TH=90.0; // Threshold for fuzzy matching
-      //  String inputfilename="//Users//rohit//expert//programs//corpus//test6//enfr2013releaseutf8.en.fil.txt.r200";
-      //  String tmsrcfilename="//Users//rohit//expert//programs//corpus//test6//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
+               // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
+
+    /*    String inputfilename="//Users//rohit//expert//programs//corpus//test8//2013.en.txt";
+        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test12//2011.en.txt";
+        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test12//2011.fr.txt";
+        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test12//2013.fr.txt";
+        String outfile="//Users//rohit//expert//programs//corpus//test12//topmatch.xml";
+       String ppfilename="//Users//rohit//expert//programs//corpus//test12//ppdbtmp.txt";
+      */
+     /*   String inputfilename="//Users//rohit//expert//programs//corpus//test8//enfr2013releaseutf8.en.fil.txt.r200";
+        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test8//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
        // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
-      //  String tmtgtfilename="//Users//rohit//expert//programs//corpus//test6//enfr2011_710_12releaseutf8.fr.fil.txt.r50000";
-      //  String inputtgtfilename="//Users//rohit//expert//programs//corpus//test6//enfr2013releaseutf8.fr.fil.txt.r200";
-      //  String outfile="//Users//rohit//expert//programs//corpus//test6//without.enfr2013.en.topmatch.xml";
-       // String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt";
+        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test8//enfr2011_710_12releaseutf8.fr.fil.txt.r50000";
+        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test8//enfr2013releaseutf8.fr.fil.txt.r200";
+        String outfile="//Users//rohit//expert//programs//corpus//test8//withlpp.xml";
+        String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt";
         
-       // withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
-         //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
+      withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
+       */  //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
 
       //  System.out.println("Without PP Finished");
-        
+      
         if(!(args.length==5 || args.length==7)){
             System.err.println("Please provide all desired file names and options as follows:\n");
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
@@ -415,7 +596,7 @@ public class EDMatch {
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename ] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
             System.exit(1);
         }
-        
+       
     }
    
 }

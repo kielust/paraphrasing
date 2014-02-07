@@ -123,7 +123,7 @@ public class LevenshteinDistancePP  {
         // indexes into strings s and t
         short i; // iterates through s
         short j; // iterates through t
-        ExtToken t_j;// = null; // jth object of t
+        ExtToken t_j = null; // jth object of t
         ExtToken t_jpext=new ExtToken();
         short cost; // cost
 
@@ -138,18 +138,24 @@ public class LevenshteinDistancePP  {
         ArrayList<PPPair> ppusedinsentence=new ArrayList();
         short offset[]=new short[MAX_PP];    //paraphrase offset to handle diff in src and pp length
         short p_off_j=0;
-        for (j = 1; j <= m; j++) {
-            t_j = t[j - 1];
+       // for (j = 1; j <= m; j++) {
+        for (j = 1; j <= m || flag==true; j++) {
+            if(j<=m)t_j = t[j - 1];
+            else t_j=new ExtToken(new Token("DUMMY",0));
             for(int k=0;k<MAX_PP;k++)
                 d[k][0] = j;
-            
-            if(flag==false&&(!t_j.getpplist().isEmpty())){
+            if((flag==false)){
+                maxts=0; //reset 
+                noiter=1; //reset
+                t_jpext=null; 
+            if((j<=n)&&(!t_j.getpplist().isEmpty())){
                 flag=true;
                 maxts=getmaxtargetsize(t_j.getpplist());
                 alpp=t_j.getpplist();
                 noiter=1+t_j.getpplist().size();
                 t_jpext=t_j;    
                 System.out.print(noiter+" "+maxts+" "+j+":");
+                }
             }else if(true==flag)maxtscount++;
             
             for(int pind=0;pind<noiter;pind++){
@@ -158,15 +164,17 @@ public class LevenshteinDistancePP  {
                     if(t_jpext.getpplist().get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
                         if(t_jpext.getpplist().get(pind-1).hasSrctokenAtIndex(maxtscount-1)){ //src && pp both have token
                     t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
-                        }else{                  //pp has token but src dont have,increase in length pp>src
+                        }else{                  //pp has token but src dont have,set offset
                          offset[pind]++;
                          t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
                         }
                     }else{     //pind>0 and pp dont have token, take help from offset
-                    t_jp=t[j-1-offset[pind]].getToken();
+                        if(t_jpext.getpplist().get(pind-1).hasSrctokenAtIndex(maxtscount-1))offset[pind]--;
+                        
+                        t_jp=t_j.getToken();
                     }
                 }else{
-                t_jp=t_j.getToken();
+                t_jp=t_j.getToken();  //
                 }
                 Token s_i ;//= null; // ith object of s
                targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculattion of edit distance
@@ -179,12 +187,12 @@ public class LevenshteinDistancePP  {
                     else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
                 }
             }
-            if((maxts!=0 )&& (maxts==maxtscount)){
+            if((j<=n)&&(maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14
                 int ind=0;
-                int mindistance=d[0][j];
+                int mindistance=d[0][j+p_off_j];
                 short offset_j=0;
                 for(int pind=1;pind<noiter;pind++){
-                    if(d[pind][j]<d[0][j] && d[pind][j]<mindistance){
+                    if(d[pind][j+p_off_j+offset[pind]]<d[0][j+p_off_j] && d[pind][j+p_off_j+offset[pind]]<mindistance){
                         mindistance=d[pind][j];
                         ind=pind;
                         offset_j=offset[pind];
@@ -211,6 +219,8 @@ public class LevenshteinDistancePP  {
                 offset=new short[MAX_PP];
                 
             }
+            if(j>n)flag=false;
+
             // copy current distance counts to 'previous row' distance counts
             swap = p;
             p = d;
