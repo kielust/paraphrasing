@@ -46,55 +46,14 @@ public class LevenshteinDistancePP  {
      */
     private short[][] p = new short[MAX_PP][MAX_N + 1];
     
-    /*private short getMaxindex(short a,short b, short c, short d){
-     if(a>=b && a>=c && a>=d)return 1;
-     if(b>=a && b>=c && b>=d)return 2;
-     if(c>=a && c>=b && c>=d)return 3;
-     if(d>=a && d>=b && d>=c)return 4;
-     return 5;
-    }
-    private paraphrase getmaxmatchpp(extToken[] s,extToken[] t, short j, ArrayList<paraphrase> alpp){
-        extToken t_j=t[j-1];
-        short bestppindex=-1;
-        short bestindex=-1;
-        short index=0;
-        short max=-1;
-        short maxp=-1;
-        for(paraphrase p:alpp){
-           String pptext=p.srcpp;
-           String [] apptext=pptext.split(" ");
-           short maxtmp=0;
-           short maxptmp=0;
-           for(int i=0;i<p.lensrcpp;i++){
-               if(s[i+j-1].equals(t[i+j-1])){
-                   maxtmp++;
-               }
-               if(apptext[i].equals(s[i+j-1].tk.getText())){
-                   maxptmp++;
-               }
-               short m=getMaxindex(max,maxp,maxtmp,maxptmp);
-               if(m==3){
-                   max=maxtmp;
-                   bestindex=index;
-               }else if(m==4){
-                   maxp=maxptmp;
-                   bestppindex=index;
-               }
-           }
-           index++;
-        }
-        if(max<maxp){
-            return alpp.get(bestppindex);
-        }
-        
-        return null;
-    }*/
     
     int getmaxtargetsize(ArrayList<Paraphrase> p){
         int max=0;
         for(int i=0;i<p.size();i++){
             if(p.get(i).noOfWordsSrcPP()>max)
                 max=p.get(i).noOfWordsSrcPP();
+            if(p.get(i).noOfWordsSrc()>max)
+                max=p.get(i).noOfWordsSrc();
         }
         return max;
     }
@@ -139,92 +98,105 @@ public class LevenshteinDistancePP  {
         short offset[]=new short[MAX_PP];    //paraphrase offset to handle diff in src and pp length
         short p_off_j=0;
        // for (j = 1; j <= m; j++) {
+        int effj=0;
         for (j = 1; j <= m || flag==true; j++) {
+            effj++;
             if(j<=m)t_j = t[j - 1];
-            else t_j=new ExtToken(new Token("DUMMY",0));
+            else t_j=new ExtToken(new Token("DUMMY",1));  //0 offset for valid token
             for(int k=0;k<MAX_PP;k++)
-                d[k][0] = j;
+                d[k][0] = (short)effj;
             if((flag==false)){
                 maxts=0; //reset 
                 noiter=1; //reset
                 t_jpext=null; 
-            if((j<=n)&&(!t_j.getpplist().isEmpty())){
+                maxtscount=1;
+            if((effj<=n)&&(!t_j.getpplist().isEmpty())){
                 flag=true;
                 maxts=getmaxtargetsize(t_j.getpplist());
                 alpp=t_j.getpplist();
                 noiter=1+t_j.getpplist().size();
-                t_jpext=t_j;    
+                t_jpext=t_j;
+                for(int pin=1;pin<noiter;pin++){
+                    offset[pin]=(short)(alpp.get(pin-1).noOfWordsSrcPP()-alpp.get(pin-1).noOfWordsSrc());
+                }
                 System.out.print(noiter+" "+maxts+" "+j+":");
                 }
             }else if(true==flag)maxtscount++;
             
             for(int pind=0;pind<noiter;pind++){
-                Token t_jp;
+                Token t_jp=t_j.getToken();
                 if(pind>0){
-                    if(t_jpext.getpplist().get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
-                        if(t_jpext.getpplist().get(pind-1).hasSrctokenAtIndex(maxtscount-1)){ //src && pp both have token
-                    t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
-                        }else{                  //pp has token but src dont have,set offset
-                         offset[pind]++;
-                         t_jp=t_jpext.getpplist().get(pind-1).getpptokenAtIndex(maxtscount-1);
-                        }
+                    if(alpp.get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
+                            t_jp=alpp.get(pind-1).getpptokenAtIndex(maxtscount-1);
                     }else{     //pind>0 and pp dont have token, take help from offset
-                        if(t_jpext.getpplist().get(pind-1).hasSrctokenAtIndex(maxtscount-1))offset[pind]--;
-                        
-                        t_jp=t_j.getToken();
+                        if(t_j.getToken().isvalid()) {
+                            if((maxtscount-1)>(-offset[pind]))
+                                t_jp=t[effj-1-offset[pind]].getToken();
+                            else t_jp=new Token("DUMMY",1);
+                        }
                     }
-                }else{
-                t_jp=t_j.getToken();  //
                 }
                 Token s_i ;//= null; // ith object of s
-               targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculattion of edit distance
-             for (i = 1; i <= n; i++) {
+              // targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculation of edit distance
+             if(t_jp.isvalid()){   //when j>m
+                 System.out.println("   j="+j+" pind="+pind);
+               for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
                     // minimum of cell to the left+1, to the top+1, diagonally left
                     // and up +cost
                     if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost); //use p of basic 
                     else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
+                    System.out.print(s_i.getText()+" "+t_jp.getText()+" "+d[pind][i]+"\t");
                 }
+                System.out.println();
+             }else{
+                 d[pind]=p[pind]; //copy previous value
+             }
             }
-            if((j<=n)&&(maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14
+            if((maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14, changed on 7 feb 18:13 
                 int ind=0;
-                int mindistance=d[0][j+p_off_j];
-                short offset_j=0;
-                for(int pind=1;pind<noiter;pind++){
-                    if(d[pind][j+p_off_j+offset[pind]]<d[0][j+p_off_j] && d[pind][j+p_off_j+offset[pind]]<mindistance){
-                        mindistance=d[pind][j];
+                int mindistance=500;
+                //mindistance= (j>n) ? d[0][n] : mindistance;
+                int validj= (effj>n)? n :effj;
+                //mindistance= (j<=m && j<=n) ? d[0][j] : d[0][m];  //why m
+                mindistance=d[0][validj];
+                short offset_j=0;             
+                for(int pind=1; pind<noiter;pind++){
+                    validj=( (effj+offset[pind])>n ) ? n: (effj+offset[pind]);
+                    if(d[pind][validj]<mindistance){
+                        mindistance=d[pind][validj];
                         ind=pind;
                         offset_j=offset[pind];
                     }
                 }
                 if(ind!=0){
-                    for(int k=0;k<=n;k++){
-                        d[0][k]=d[ind][k];  ///d[0]=d[ind];
-                    }
+                        d[0]=d[ind];
                     Paraphrase pp=alpp.get(ind-1);
                     PPPair pppair=new PPPair(pp,j-maxts); 
                     ppusedinsentence.add(pppair);
-                    /*for(int k=j+p_off_j-maxts;k<j+p_off_j;k++){
+             //       for(int k=j+p_off_j-maxts;k<j+p_off_j && targetsentencematch[ind][k].isvalid() ;k++){
                        // Token temp=targetsentencematch.get(ind).get(k);
-                        targetsentencematch[0][k]=targetsentencematch[ind][k];
-                    }
-                    */
-                    System.arraycopy(targetsentencematch[ind], j+p_off_j-maxts, targetsentencematch[0], j+p_off_j-maxts, j+p_off_j - (j+p_off_j-maxts));
-                    j=(short) (j-offset_j);
+            //            targetsentencematch[0][k]=targetsentencematch[ind][k];
+                //    }
+                    
+                    //System.arraycopy(targetsentencematch[ind], j+p_off_j-maxts, targetsentencematch[0], j+p_off_j-maxts, j+p_off_j - (j+p_off_j-maxts));
+                    if(offset_j>0)j=(short)(j-offset_j);
                     p_off_j+=offset_j;
+                    if(offset_j<0)effj=effj+offset_j;
                 }
                 maxtscount=1;
                 flag=false;
                 offset=new short[MAX_PP];
                 
             }
-            if(j>n)flag=false;
+            //if(j>n)flag=false;
 
             // copy current distance counts to 'previous row' distance counts
             swap = p;
             p = d;
-            d = swap;
+            //short [][]swap2;
+            d = new short[MAX_PP][MAX_N+1];   //boundry condition when j >= m, saving last value of d
         }
         // our last action in the above loop was to switch d and p, so p now
         // actually has the most recent cost counts

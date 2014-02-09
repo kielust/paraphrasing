@@ -398,7 +398,7 @@ public class EDMatch {
                     fw.write("<match score=\""+ms+"\" id=\""+maxmatchid+"\">");
                     //Token [] bestmatch=tmsrctokens.get(maxmatchid);
                     for (short i=0;i<bestmatch.length();i++) {
-                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
+//                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
                     }
                     fw.write("</match>\n");
                     fw.write("<paraphrases>");
@@ -551,13 +551,14 @@ public class EDMatch {
       //  double TH=90.0; // Threshold for fuzzy matching
                // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
 
-    /*    String inputfilename="//Users//rohit//expert//programs//corpus//test8//2013.en.txt";
-        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test12//2011.en.txt";
-        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test12//2011.fr.txt";
-        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test12//2013.fr.txt";
-        String outfile="//Users//rohit//expert//programs//corpus//test12//topmatch.xml";
-       String ppfilename="//Users//rohit//expert//programs//corpus//test12//ppdbtmp.txt";
-      */
+        String inputfilename="//Users//rohit//expert//programs//corpus//test1//2013.en.txt";
+        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test1//2011.en.txt";
+        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test1//2011.fr.txt";
+        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test1//2013.fr.txt";
+        String outfile="//Users//rohit//expert//programs//corpus//test1//topmatch.xml";
+       String ppfilename="//Users//rohit//expert//programs//corpus//test1//ppdbtmp.txt";
+      withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
+      
      /*   String inputfilename="//Users//rohit//expert//programs//corpus//test8//enfr2013releaseutf8.en.fil.txt.r200";
         String tmsrcfilename="//Users//rohit//expert//programs//corpus//test8//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
        // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
@@ -570,7 +571,7 @@ public class EDMatch {
        */  //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
 
       //  System.out.println("Without PP Finished");
-      
+   /*   
         if(!(args.length==5 || args.length==7)){
             System.err.println("Please provide all desired file names and options as follows:\n");
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
@@ -596,7 +597,7 @@ public class EDMatch {
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename ] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
             System.exit(1);
         }
-       
+       */
     }
    
 }

@@ -99,6 +99,9 @@ public class Token {
         return hash + "@" + offset;
     }
 
+    public final boolean isvalid(){
+        return offset==0;
+    }
     /**
      * Return the section of the string denoted by the token
      */
