@@ -96,8 +96,8 @@ public class LevenshteinDistancePPall  {
     int getmaxtargetsize(ArrayList<Paraphrase> p){
         int max=0;
         for(int i=0;i<p.size();i++){
-            if(p.get(i).noOfWordsSrcPP()>max)
-                max=p.get(i).noOfWordsSrcPP();
+            if(p.get(i).noOfWordsPP()>max)
+                max=p.get(i).noOfWordsPP();
         }
         return max;
     }

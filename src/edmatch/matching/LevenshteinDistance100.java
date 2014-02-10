@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistancePP  {
+public class LevenshteinDistance100  {
 
     /**
      * Get minimum of three values
@@ -52,6 +52,12 @@ public class LevenshteinDistancePP  {
         for(int i=0;i<p.size();i++){
             if(p.get(i).noOfWordsPP()>max)
                 max=p.get(i).noOfWordsPP();
+            }
+        return max;
+    }
+    int getmaxsourcesize(ArrayList<Paraphrase> p){
+        int max=0;
+        for(int i=0;i<p.size();i++){
             if(p.get(i).noOfWordsSrc()>max)
                 max=p.get(i).noOfWordsSrc();
         }
@@ -74,7 +80,9 @@ public class LevenshteinDistancePP  {
             n = MAX_N-1;
         if (m > MAX_N)
             m = MAX_N-1;
-        Token [][]targetsentencematch=new Token[MAX_PP][m+MAX_OFFSET];
+         
+       Token []targetsentencematch=new Token[m+MAX_OFFSET];
+       short matchindex=0;
         //ArrayList<ArrayList<Token> > targetsentencematch= new ArrayList<ArrayList<Token> >();
        //        LinkedList<LinkedList<Token>> targetsentencematch=new LinkedList<LinkedList<Token> >();
 
@@ -89,38 +97,47 @@ public class LevenshteinDistancePP  {
         for (i = 0; i <= n; i++)
             p[0][i] = i;
         int maxts=0;
+        int maxsrc=0;
+        int maxtgt=0;
         int maxtscount=1;
         boolean flag=false;
         int noiter=1;
         ArrayList<Paraphrase> alpp=new ArrayList();
         
         ArrayList<PPPair> ppusedinsentence=new ArrayList();
-        short offset[]=new short[MAX_PP];    //paraphrase offset to handle diff in src and pp length
-        short p_off_j=0;
+ //       short offset[]=new short[MAX_PP];    //paraphrase offset to handle diff in src and pp length
+   //     short p_off_j=0;
        // for (j = 1; j <= m; j++) {
-        int effj=0;
-        short offset_j=0;
-        for (j = 1; j <= m || flag==true; j++) {
-            effj++;
-            offset_j=0;             
-            if(j<=m)t_j = t[j - 1];
+     //   int effj=0;
+   //     short offset_j=0;
+        short oldj=0;
+        short effj;
+        short oldeffj=1;
+        for (j = 1,effj=1; effj <= m || flag==true; j++,effj++) {
+       //     effj++;
+      //      offset_j=0;             
+            if(effj<=m)t_j = t[effj - 1];
             else t_j=new ExtToken(new Token("DUMMY",1));  //0 offset for valid token
             for(int k=0;k<MAX_PP;k++)
-                d[k][0] = (short)effj;
+                d[k][0] = (short)j;
             if((flag==false)){
                 maxts=0; //reset 
                 noiter=1; //reset
                 t_jpext=null; 
                 maxtscount=1;
-            if((effj<=n)&&(!t_j.getpplist().isEmpty())){
+            if((j<=n)&&(!t_j.getpplist().isEmpty())){
                 flag=true;
-                maxts=getmaxtargetsize(t_j.getpplist());
+                oldj=j;
+                oldeffj=effj;
+                maxtgt=getmaxtargetsize(t_j.getpplist());
+                maxsrc=getmaxsourcesize(t_j.getpplist());
+                maxts=Math.max(maxtgt, maxsrc);
                 alpp=t_j.getpplist();
                 noiter=1+t_j.getpplist().size();
                 t_jpext=t_j;
-                for(int pin=1;pin<noiter;pin++){
-                    offset[pin]=(short)(alpp.get(pin-1).noOfWordsPP()-alpp.get(pin-1).noOfWordsSrc());
-                }
+          //      for(int pin=1;pin<noiter;pin++){
+          //          offset[pin]=(short)(alpp.get(pin-1).noOfWordsSrcPP()-alpp.get(pin-1).noOfWordsSrc());
+          //      }
                 System.out.print(noiter+" "+maxts+" "+j+":");
                 }
             }else if(true==flag)maxtscount++;
@@ -131,17 +148,19 @@ public class LevenshteinDistancePP  {
                     if(alpp.get(pind-1).haspptokenAtIndex(maxtscount-1)){  //pp has token
                             t_jp=alpp.get(pind-1).getpptokenAtIndex(maxtscount-1);
                     }else{     //pind>0 and pp dont have token, take help from offset
-                        if(t_j.getToken().isvalid()) {
-                            if(  ((effj-1-offset[pind])<m)  && ( (maxtscount-1) > (-offset[pind]) )  )
-                                t_jp=t[effj-1-offset[pind]].getToken();
-                            else t_jp=new Token("DUMMY",1);
-                        }
+                        t_jp=new Token("DUMMY",1);
+                     //   if(t_j.getToken().isvalid()) {
+                      //      if(  ((effj-1-offset[pind])<m)  && ( (maxtscount-1) > (-offset[pind]) )  )
+                       //         t_jp=t[effj-1-offset[pind]].getToken();
+                       //     else t_jp=new Token("DUMMY",1);
+                      //  }
                     }
+                }else{
+                    if(flag==true && maxtscount>maxsrc)t_jp=new Token("DUMMY",1);
                 }
                 Token s_i ;//= null; // ith object of s
              if(t_jp.isvalid()){   //when j>m
                  System.out.println("   j="+j+" pind="+pind);
-                 targetsentencematch[pind][j+p_off_j-1]=t_jp;  //target sentence matched in calculation of edit distance
                  for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
@@ -152,6 +171,7 @@ public class LevenshteinDistancePP  {
                     System.out.print(s_i.getText()+" "+t_jp.getText()+" "+d[pind][i]+"\t");
                 }
                 System.out.println();
+                if(flag==false){targetsentencematch[matchindex++]=t_jp;} //target sentence matched in calculation of edit distance
              }else{
                  d[pind]=p[pind]; //copy previous value
              }
@@ -160,35 +180,59 @@ public class LevenshteinDistancePP  {
                 int ind=0;
                 int mindistance=500;
                 //mindistance= (j>n) ? d[0][n] : mindistance;
-                int validj= (effj>n)? n :effj;
+                int validj;//= (effj>n)? n :effj;
                 //mindistance= (j<=m && j<=n) ? d[0][j] : d[0][m];  //why m
-                mindistance=d[0][validj];
-                for(int pind=1; pind<noiter;pind++){
-                    validj=( (effj+offset[pind])>n ) ? n: (effj+offset[pind]); //wrong for +ive offset
-                    if(d[pind][validj]<mindistance){
+               // mindistance=d[0][validj];
+                boolean ppwin=false;
+                for(int pind=1; pind<noiter;pind++){                    
+                    int lenpp=t_jpext.getpplist().get(pind-1).noOfWordsPP();
+                    validj=( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1); //wrong for +ive offset
+                    if(d[pind][validj]<=mindistance){
                         mindistance=d[pind][validj];
                         ind=pind;
-                        offset_j=offset[pind];
+                        ppwin=true;
+                 //       offset_j=offset[pind];
+                    }
+                    int lensrc=t_jpext.getpplist().get(pind-1).noOfWordsSrc();
+                    validj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1); //wrong for +ive offset
+                    if(d[0][validj]<=mindistance){
+                        mindistance=d[0][validj];
+                        ind=pind;
+                        ppwin=false;
+                //        offset_j=0;
                     }
                 }
-                if(ind!=0){
+                if(ppwin){
                         d[0]=d[ind];
                     Paraphrase pp=alpp.get(ind-1);
                     PPPair pppair=new PPPair(pp,j-maxts); 
                     ppusedinsentence.add(pppair);
-                    for(int k=j+p_off_j-maxts;k<j+p_off_j && k<n ;k++){
+              //      for(int k=j+p_off_j-maxts;k<j+p_off_j && k<n ;k++){
                        // Token temp=targetsentencematch.get(ind).get(k);
-                        targetsentencematch[0][k]=targetsentencematch[ind][k];
-                   }
-                    
+             //           targetsentencematch[0][k]=targetsentencematch[ind][k];
+             //      }
+                    for(int k=0;k<t_jpext.getpplist().get(ind-1).noOfWordsPP();k++){
+                        targetsentencematch[matchindex++]=t_jpext.getpplist().get(ind-1).getpptokenAtIndex(k);                                               
+                    }
                     //System.arraycopy(targetsentencematch[ind], j+p_off_j-maxts, targetsentencematch[0], j+p_off_j-maxts, j+p_off_j - (j+p_off_j-maxts));
-                    if(offset_j>0)j=(short)(j-offset_j);
-                    p_off_j+=offset_j;
-                    if(offset_j<0)effj=effj+offset_j;
+                 //   if(offset_j>0)j=(short)(j-offset_j);
+                //    p_off_j+=offset_j;
+                    effj=(short)(oldeffj-1+t_jpext.getpplist().get(ind-1).noOfWordsSrc());
+                    j=(short)(oldj-1+t_jpext.getpplist().get(ind-1).noOfWordsPP());
+
+                   // if(offset_j<0)effj=effj+offset_j;
+                }else{
+                
+                for(int k=0;k<maxsrc;k++){
+                        targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
+                    }
+                j=(short)(oldj-1+maxsrc);
+                effj=(short)(oldeffj-1+maxsrc);
+                                
                 }
                 maxtscount=1;
                 flag=false;
-                offset=new short[MAX_PP];
+          //      offset=new short[MAX_PP];
                 
             }
             //if(j>n)flag=false;
@@ -208,7 +252,7 @@ public class LevenshteinDistancePP  {
         // actually has the most recent cost counts
         System.out.println();
         LdPPSPair ldpair;
-        ldpair=new LdPPSPair(targetsentencematch[0],(short)(m+p_off_j-offset_j),p[0][n],ppusedinsentence);
+        ldpair=new LdPPSPair(targetsentencematch,(short)(matchindex),p[0][n],ppusedinsentence);
        // ldpair=new LdPPSPair(targetsentencematch[0],(short)targetsentencematch[0].length,p[0][n],ppusedinsentence);
         return ldpair;
     }

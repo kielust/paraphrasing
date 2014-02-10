@@ -43,7 +43,7 @@ public class Paraphrase {
   public  int noOfWordsSrc(){
         return lensrc;
     }
-    public int noOfWordsSrcPP(){
+    public int noOfWordsPP(){
         return lensrcpp;
     }
   public  Token [] getAllpptokens(){

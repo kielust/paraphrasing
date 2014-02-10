@@ -12,7 +12,7 @@ import edmatch.data.Token;
 import edmatch.data.LdPPSPair;
 import edmatch.matching.LevenshteinDistancePPall;
 import edmatch.matching.LevenshteinDistance;
-import edmatch.matching.LevenshteinDistancePP;
+import edmatch.matching.LevenshteinDistance100;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,7 +171,7 @@ public class EDMatch {
                         LdPPSPair ldpair;
                         double sim;
                         if(flag=='a'){
-                            LevenshteinDistancePP dc= new LevenshteinDistancePP();
+                            LevenshteinDistance100 dc= new LevenshteinDistance100();
                             ldpair = dc.compute(sen,tmsen.get());
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
@@ -357,7 +357,7 @@ public class EDMatch {
                         LdPPSPair ldpair;
                         double sim;
                         if(flag=='a'){
-                            LevenshteinDistancePP dc= new LevenshteinDistancePP();
+                            LevenshteinDistance100 dc= new LevenshteinDistance100();
                             ldpair = dc.compute(sen,tmsen.get());
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
@@ -398,7 +398,7 @@ public class EDMatch {
                     fw.write("<match score=\""+ms+"\" id=\""+maxmatchid+"\">");
                     //Token [] bestmatch=tmsrctokens.get(maxmatchid);
                     for (short i=0;i<bestmatch.length();i++) {
-//                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
+                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
                     }
                     fw.write("</match>\n");
                     fw.write("<paraphrases>");
@@ -551,27 +551,29 @@ public class EDMatch {
       //  double TH=90.0; // Threshold for fuzzy matching
                // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
 
-        String inputfilename="//Users//rohit//expert//programs//corpus//test1//2013.en.txt";
-        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test1//2011.en.txt";
-        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test1//2011.fr.txt";
-        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test1//2013.fr.txt";
-        String outfile="//Users//rohit//expert//programs//corpus//test1//topmatch.xml";
-       String ppfilename="//Users//rohit//expert//programs//corpus//test1//ppdbtmp.txt";
+     /*   String inputfilename="//Users//rohit//expert//programs//corpus//test7//2013.en.txt";
+        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test7//2011.en.txt";
+        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test7//2011.fr.txt";
+        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test7//2013.fr.txt";
+        String outfile="//Users//rohit//expert//programs//corpus//test7//topmatch.xml";
+       //String ppfilename="//Users//rohit//expert//programs//corpus//test7//ppdbtmp.txt";
+        String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt";
+
       withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
-      
-     /*   String inputfilename="//Users//rohit//expert//programs//corpus//test8//enfr2013releaseutf8.en.fil.txt.r200";
-        String tmsrcfilename="//Users//rohit//expert//programs//corpus//test8//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
+      */
+    /*    String inputfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2013releaseutf8.en.fil.txt.r200";
+        String tmsrcfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
        // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
-        String tmtgtfilename="//Users//rohit//expert//programs//corpus//test8//enfr2011_710_12releaseutf8.fr.fil.txt.r50000";
-        String inputtgtfilename="//Users//rohit//expert//programs//corpus//test8//enfr2013releaseutf8.fr.fil.txt.r200";
-        String outfile="//Users//rohit//expert//programs//corpus//test8//withlpp.xml";
+        String tmtgtfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2011_710_12releaseutf8.fr.fil.txt.r50000";
+        String inputtgtfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2013releaseutf8.fr.fil.txt.r200";
+        String outfile="//Users//rohit//expert//programs//corpus//oldtests//test8//withlpp.xml";
         String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt";
         
       withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
-       */  //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
+    */     //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
 
       //  System.out.println("Without PP Finished");
-   /*   
+      
         if(!(args.length==5 || args.length==7)){
             System.err.println("Please provide all desired file names and options as follows:\n");
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
@@ -597,7 +599,7 @@ public class EDMatch {
             System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename ] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
             System.exit(1);
         }
-       */
+       
     }
    
 }

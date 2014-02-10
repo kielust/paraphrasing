@@ -88,7 +88,7 @@ public class ParaphraseTest {
         System.out.println("noOfWordsSrcPP");
         Paraphrase instance = null;
         int expResult = 0;
-        int result = instance.noOfWordsSrcPP();
+        int result = instance.noOfWordsPP();
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
