@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistance100  {
+public class LevenshteinDistance101  {
 
     /**
      * Get minimum of three values
@@ -223,11 +223,11 @@ public class LevenshteinDistance100  {
                    // if(offset_j<0)effj=effj+offset_j;
                 }else{
                 
-                for(int k=0;k<maxsrc;k++){
+                for(int k=0;k<t_jpext.getpplist().get(ind-1).noOfWordsSrc();k++){
                         targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
                     }
-                j=(short)(oldj-1+maxsrc);
-                effj=(short)(oldeffj-1+maxsrc);
+                j=(short)(oldj-1+t_jpext.getpplist().get(ind-1).noOfWordsSrc());
+                effj=(short)(oldeffj-1+t_jpext.getpplist().get(ind-1).noOfWordsSrc());
                                 
                 }
                 maxtscount=1;

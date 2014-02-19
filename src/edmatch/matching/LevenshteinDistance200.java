@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistance100  {
+public class LevenshteinDistance200  {
 
     /**
      * Get minimum of three values

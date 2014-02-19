@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistance100  {
+public class LevenshteinDistance99  {
 
     /**
      * Get minimum of three values
@@ -138,7 +138,7 @@ public class LevenshteinDistance100  {
           //      for(int pin=1;pin<noiter;pin++){
           //          offset[pin]=(short)(alpp.get(pin-1).noOfWordsSrcPP()-alpp.get(pin-1).noOfWordsSrc());
           //      }
-             //   System.out.print(noiter+" "+maxts+" "+j+":");
+                System.out.print(noiter+" "+maxts+" "+j+":");
                 }
             }else if(true==flag)maxtscount++;
             
@@ -170,7 +170,7 @@ public class LevenshteinDistance100  {
                     else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
                 //    System.out.print(s_i.getText()+" "+t_jp.getText()+" "+d[pind][i]+"\t");
                 }
-                System.out.println();
+            //    System.out.println();
                 if(flag==false){targetsentencematch[matchindex++]=t_jp;} //target sentence matched in calculation of edit distance
              }else{
                  d[pind]=p[pind]; //copy previous value
@@ -179,6 +179,7 @@ public class LevenshteinDistance100  {
             if((maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14, changed on 7 feb 18:13 
                 int ind=0;
                 int mindistance=500;
+                int len=0;
                 //mindistance= (j>n) ? d[0][n] : mindistance;
                 int validj;//= (effj>n)? n :effj;
                 //mindistance= (j<=m && j<=n) ? d[0][j] : d[0][m];  //why m
@@ -187,18 +188,20 @@ public class LevenshteinDistance100  {
                 for(int pind=1; pind<noiter;pind++){                    
                     int lenpp=t_jpext.getpplist().get(pind-1).noOfWordsPP();
                     validj=( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1); 
-                    if(d[pind][validj]<=mindistance){
+                    if((mindistance-d[pind][validj])>(len-lenpp)){      //check paraphrased one
                         mindistance=d[pind][validj];
                         ind=pind;
                         ppwin=true;
+                        len=lenpp;
                  //       offset_j=offset[pind];
                     }
                     int lensrc=t_jpext.getpplist().get(pind-1).noOfWordsSrc();
                     validj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1); 
-                    if(d[0][validj]<=mindistance){
+                    if((mindistance-d[0][validj])>=(len-lensrc)){         //check simple one
                         mindistance=d[0][validj];
                         ind=pind;
                         ppwin=false;
+                        len=lensrc;
                 //        offset_j=0;
                     }
                 }

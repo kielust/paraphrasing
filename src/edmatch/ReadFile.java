@@ -20,7 +20,7 @@ public class ReadFile {
     
     ArrayList<Token []> lotks=new ArrayList();
     ArrayList<String> tmSource=new ArrayList();
-    public ReadFile(String filename){
+    public ReadFile(String filename, boolean phflag){
         try{
         File file=new File(filename);
         Scanner sc=new Scanner(file);
@@ -28,7 +28,7 @@ public class ReadFile {
             String sentence=sc.nextLine();
            // System.out.println(sentence);
             tmSource.add(sentence);
-            CollectTokens ct=new CollectTokens(sentence);
+            CollectTokens ct=new CollectTokens(sentence,phflag);
             Token [] tokens=ct.get();
             lotks.add(tokens);
     //        System.out.println(tokens[0]);

@@ -17,6 +17,10 @@ public class PPPair{
             this.paraphrase=paraphrase;
             this.location=location;
             }
+           public PPPair(){
+           this.paraphrase=null;
+           this.location=-1;
+           }
          public Paraphrase getParaphrase(){
              return paraphrase;
          }

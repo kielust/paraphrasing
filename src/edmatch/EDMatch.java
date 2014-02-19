@@ -12,6 +12,7 @@ import edmatch.data.Token;
 import edmatch.data.LdPPSPair;
 import edmatch.matching.LevenshteinDistancePPall;
 import edmatch.matching.LevenshteinDistance;
+//import edmatch.matching.LevenshteinDistance100;
 import edmatch.matching.LevenshteinDistance100;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class EDMatch {
             ) {
         
         double similarity = (100.0 * (Math.max(str, cand) - score)) / Math.max(str, cand);
-        System.out.println("ED:"+score+"Sim:"+similarity+" input:"+str+" Match:"+cand);
+       // System.out.println("ED:"+score+"Sim:"+similarity+" input:"+str+" Match:"+cand);
         return similarity;
     }
     
@@ -86,10 +87,12 @@ public class EDMatch {
                     return 0;
                 }
             }*/
+    
     /**
-     * extract matches in two steps 
-     * step1: find matches using simple edit distance
-     * step2: Apply paraphrasing to matches find from step 1
+     * extract matches in two steps
+     * step1: Filter using length 
+     * step2: find matches using simple edit distance
+     * step3: Apply paraphrasing to matches find from step 1
      * @param th threshold for step 1 filtering using edit distance
      * @param max filtering too many extracted using simple edit distance
      * @param flag type of paraphrasing '-p' or '-pa' 
@@ -101,10 +104,9 @@ public class EDMatch {
      * @return 
     */
     
-    static ArrayList<MatchStore>  extractMatch(HashMap<String, ArrayList<String> > ppdict,double th,int max, char flag, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<String> tgtTM, ArrayList<String> tgtinput, String outfile){
+    static ArrayList<MatchStore>  extractMatchDouble(double th,int max, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<SentencePP> tmsrcexttokens, ArrayList<String> tgtTM,ArrayList<String> tgtinput, String outfile){
         ArrayList<MatchStore> listms=new ArrayList();
-        
-     
+             
             class match implements Comparable<match> {
                 double sim;
                 int index;
@@ -117,15 +119,14 @@ public class EDMatch {
                     return Double.valueOf(this.sim).compareTo(other.sim);
                 }
                 
-            }
-    
+            }    
             
         try{
             FileWriter fw = new FileWriter(outfile);
                 int sno=-1;
                 fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 fw.write("<document>");
-                
+                System.out.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
                 for(Token [] sen:inputtokens){
                     //   MatchStore m=new MatchStore(sen);
                     sno++;
@@ -137,50 +138,47 @@ public class EDMatch {
                     int index=0;
                     List<match> thmatches=new ArrayList();
                     for(Token [] tmsen:tmsrctokens){
-                        double sim=calcSimilarity(tmsen, sen);
-                        // printtokens(tmsen);
+                        double lenratio=(100.0*Math.min(tmsen.length, sen.length))/(1.0*Math.max(tmsen.length, sen.length));
+                    //    System.out.println("LenRatio:"+lenratio);
+                        if(lenratio >=th*1.4){
+                            double sim=calcSimilarity(tmsen, sen);
+                     //    printtokens(tmsen);
                         // printtokens(sen);
-                        //  System.out.println(" SIM:"+sim);
-                        if(th<sim){
-                            thmatches.add(new match(sim,index));
-                            
+                      //    System.out.println(" SIM:"+sim+" th:"+th);
+                            if(th<sim){
+                              thmatches.add(new match(sim,index));
+                            }
                         }
                         index++;
-                        
                     }
+                    System.out.println(thmatches.size());
                     Collections.sort(thmatches);
                     Collections.reverse(thmatches);
                     ArrayList<SentencePP> topmatches=new ArrayList();
-                    for(int i=0;i<max;i++){
-                        match m=thmatches.get(i);
-                        SentencePP spp=new SentencePP(tmsrctokens.get(m.index),ppdict);
-                        topmatches.add(spp);
+                    if(!thmatches.isEmpty()){
+                        double maxsim=thmatches.get(0).sim;
+                        System.out.print("maxsim="+maxsim+" :");
+                        for(int i=0;i<max && i<thmatches.size() && th>=(maxsim-thmatches.get(i).sim); i++){
+                                //System.out.println("th="+th+" "+maxsim+" "+thmatches.get(i).sim+" "+);
+                                System.out.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
+                          //      printtokens(tmsrctokens.get(thmatches.get(i).index));
+                            topmatches.add(tmsrcexttokens.get(thmatches.get(i).index));
+                        }
                     }
-                    
-                    double maxsim=0.0;
-                    int maxmatchid=0;
-                    LdPPSPair bestmatch=null;
+                    double maxsim=-1.0;
+                    int maxmatchid=-1;
+                    LdPPSPair bestmatch=new LdPPSPair();
                     index=0;
                     //System.out.print("Processing:");
                     int tmsno=0;
                     for(SentencePP tmsen:topmatches){
-                        // double sim=calcSimilarity(tmsen.get(), sen);
-                        //System.out.println("tmsen:");
-                        //tmsen.print();
                         System.out.print(++tmsno+"=");
                         LdPPSPair ldpair;
                         double sim;
-                        if(flag=='a'){
                             LevenshteinDistance100 dc= new LevenshteinDistance100();
                             ldpair = dc.compute(sen,tmsen.get());
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
-                        }else {
-                            LevenshteinDistancePPall dc= new LevenshteinDistancePPall();
-                            ldpair = dc.compute(sen,tmsen.get());
-                            if(ldpair==null)continue;
-                            sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());                        
-                        }
                         // printtokens(tmsen);
                         // printtokens(sen);
                         //  System.out.println(" SIM:"+sim);
@@ -189,16 +187,9 @@ public class EDMatch {
                             maxmatchid=index;
                             bestmatch=ldpair;
                         }
-                        /* if(sim>TH){
-                        m.add(tmsen);
-                        fw.write(sim+" ||| ");
-                        for(int i=0;i<tmsen.length;i++)
-                        fw.write(tmsen[i].getText()+" ");
-                        fw.write("\n");
-                        }*/
                         index++;
                         
-                    }                    
+                    }                   
                     
                     fw.write("<segment id=\""+sno+"\">");
                     for (Token sen1 : sen) {
@@ -223,18 +214,221 @@ public class EDMatch {
                     }
                     fw.write("</paraphrases>\n");
                     fw.write("<retvd lang=\"FR\">");
-                    String french=tgtTM.get(maxmatchid);
-                    fw.write(french);fw.write("</retvd>\n");
-                    fw.write("<retvd lang=\"EN\" id=\""+thmatches.get(maxmatchid).index+"\">");
+                    int id=-1;
+                    if(!topmatches.isEmpty()){
+                        String french=tgtTM.get(thmatches.get(maxmatchid).index);
+                        id=thmatches.get(maxmatchid).index;
+                    fw.write(french);}
+                    fw.write("</retvd>\n");
+                    fw.write("<retvd lang=\"EN\" id=\""+id+"\">");
+                    if(!topmatches.isEmpty()){
                             SentencePP spp=topmatches.get(maxmatchid);
                             ExtToken [] english=spp.get();
-                    for(ExtToken extk:english){
-                        fw.write(extk.getToken().getText()+" ");
+                            for(ExtToken extk:english){
+                                fw.write(extk.getToken().getText()+" ");
+                            }
                     }
                     fw.write("</retvd>\n");
-                    fw.write("</segment>\n");               
                     
+                    fw.write("<prevretvd lang=\"FR\">");
+                    id=-1;
+                    double prevscore=0.0;
+                    if(!topmatches.isEmpty()){
+                        String french=tgtTM.get(thmatches.get(0).index);
+                        id=thmatches.get(0).index;
+                        prevscore=thmatches.get(0).sim;
+                        fw.write(french);
+                    }
+                    fw.write("</prevretvd>\n");
+                    fw.write("<prevretvd lang=\"EN\" id=\""+id+"\"+prevscore=\""+prevscore+"\">");
+                    if(!topmatches.isEmpty()){
+                            SentencePP spp=topmatches.get(0);
+                            ExtToken [] english=spp.get();
+                            for(ExtToken extk:english){
+                                fw.write(extk.getToken().getText()+" ");
+                            }
+                    }
+                    fw.write("</prevretvd>\n");
+                    
+                    
+                    fw.write("</segment>\n");               
+                  } 
+                    
+                   fw.write("</document>");
+                   fw.close();
+            
+            }catch(IOException e){
+                System.err.print(e);
+            }
+        return listms;
+    }
+
+    /**
+     * extract matches in two steps
+     * step1: Filter using length 
+     * step2: find matches using simple edit distance
+     * step3: Apply paraphrasing to matches find from step 1
+     * @param th threshold for step 1 filtering using edit distance
+     * @param max filtering too many extracted using simple edit distance
+     * @param flag type of paraphrasing '-p' or '-pa' 
+     * @param inputtokens user input file tokens
+     * @param tmsrctokens tm source tokens
+     * @param tgtTM   tm target tokens
+     * @param tgtinput expected target for user input file
+     * @param outfile  output file in xml format 
+     * @return 
+    */
+    
+    static ArrayList<MatchStore>  extractMatch(double th,int max, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<SentencePP> tmsrcexttokens, ArrayList<String> tgtTM,ArrayList<String> tgtinput, String outfile){
+        ArrayList<MatchStore> listms=new ArrayList();
+             
+            class match implements Comparable<match> {
+                double sim;
+                int index;
+                match(double sim,int index){
+                    this.sim=sim;
+                    this.index=index;
                 }
+                @Override
+                public int compareTo(match other){
+                    return Double.valueOf(this.sim).compareTo(other.sim);
+                }
+                
+            }    
+            
+        try{
+            FileWriter fw = new FileWriter(outfile);
+                int sno=-1;
+                fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+                fw.write("<document>");
+                System.out.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
+                for(Token [] sen:inputtokens){
+                    //   MatchStore m=new MatchStore(sen);
+                    sno++;
+                    System.out.print("Executing->"+sno+" :");
+                    printtokens(sen);
+                    
+                    //double maxsim=0.0;
+                    //int maxmatchid=0;
+                    int index=0;
+                    List<match> thmatches=new ArrayList();
+                    for(Token [] tmsen:tmsrctokens){
+                        double lenratio=(100.0*Math.min(tmsen.length, sen.length))/(1.0*Math.max(tmsen.length, sen.length));
+                    //    System.out.println("LenRatio:"+lenratio);
+                        if(lenratio >=th*1.4){
+                            double sim=calcSimilarity(tmsen, sen);
+                     //    printtokens(tmsen);
+                        // printtokens(sen);
+                      //    System.out.println(" SIM:"+sim+" th:"+th);
+                            if(th<sim){
+                              thmatches.add(new match(sim,index));
+                            }
+                        }
+                        index++;
+                    }
+                    System.out.println(thmatches.size());
+                    Collections.sort(thmatches);
+                    Collections.reverse(thmatches);
+                    ArrayList<SentencePP> topmatches=new ArrayList();
+                    if(!thmatches.isEmpty()){
+                        double maxsim=thmatches.get(0).sim;
+                        System.out.print("maxsim="+maxsim+" :");
+                        for(int i=0;i<max && i<thmatches.size() && th>=(maxsim-thmatches.get(i).sim); i++){
+                                //System.out.println("th="+th+" "+maxsim+" "+thmatches.get(i).sim+" "+);
+                                System.out.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
+                          //      printtokens(tmsrctokens.get(thmatches.get(i).index));
+                            topmatches.add(tmsrcexttokens.get(thmatches.get(i).index));
+                        }
+                    }
+                    double maxsim=-1.0;
+                    int maxmatchid=-1;
+                    LdPPSPair bestmatch=new LdPPSPair();
+                    index=0;
+                    //System.out.print("Processing:");
+                    int tmsno=0;
+                    for(SentencePP tmsen:topmatches){
+                        System.out.print(++tmsno+"=");
+                        LdPPSPair ldpair;
+                        double sim;
+                            LevenshteinDistance100 dc= new LevenshteinDistance100();
+                            ldpair = dc.compute(sen,tmsen.get());
+                            if(ldpair==null)continue;
+                            sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
+                        // printtokens(tmsen);
+                        // printtokens(sen);
+                        //  System.out.println(" SIM:"+sim);
+                        if(maxsim<sim){
+                            maxsim=sim;
+                            maxmatchid=index;
+                            bestmatch=ldpair;
+                        }
+                        index++;
+                        
+                    }                   
+                    
+                    fw.write("<segment id=\""+sno+"\">");
+                    for (Token sen1 : sen) {
+                        fw.write(sen1.getText() + " ");
+                    }
+                    fw.write('\n');
+                    fw.write("<exptd>");
+                    fw.write(tgtinput.get(sno));
+                    fw.write("</exptd>\n");
+                    String ms=Math.round(maxsim*100.0)/100.0 + "";
+                    fw.write("<match score=\""+ms+"\" prevrank=\""+maxmatchid+"\">");
+                    //Token [] bestmatch=tmsrctokens.get(maxmatchid);
+                    for (short i=0;i<bestmatch.length();i++) {
+                        fw.write(bestmatch.getTokenAt(i).getText() + " ");
+                    }
+                    fw.write("</match>\n");
+                    fw.write("<paraphrases>");
+                    for(PPPair item : bestmatch.getMatchedParaphrases()){
+                        fw.write("<pp index=\"");
+                        fw.write(item.getLocation()+"\""+" text=\""+item.getParaphrase().getleft()+"\" "+"para=\""+item.getParaphrase().getright()+"\"");
+                        fw.write("/>");
+                    }
+                    fw.write("</paraphrases>\n");
+                    fw.write("<retvd lang=\"FR\">");
+                    int id=-1;
+                    if(!topmatches.isEmpty()){
+                        String french=tgtTM.get(thmatches.get(maxmatchid).index);
+                        id=thmatches.get(maxmatchid).index;
+                    fw.write(french);}
+                    fw.write("</retvd>\n");
+                    fw.write("<retvd lang=\"EN\" id=\""+id+"\">");
+                    if(!topmatches.isEmpty()){
+                            SentencePP spp=topmatches.get(maxmatchid);
+                            ExtToken [] english=spp.get();
+                            for(ExtToken extk:english){
+                                fw.write(extk.getToken().getText()+" ");
+                            }
+                    }
+                    fw.write("</retvd>\n");
+                    
+                    fw.write("<prevretvd lang=\"FR\">");
+                    id=-1;
+                    double prevscore=0.0;
+                    if(!topmatches.isEmpty()){
+                        String french=tgtTM.get(thmatches.get(0).index);
+                        id=thmatches.get(0).index;
+                        prevscore=thmatches.get(0).sim;
+                        fw.write(french);
+                    }
+                    fw.write("</prevretvd>\n");
+                    fw.write("<prevretvd lang=\"EN\" id=\""+id+"\"+prevscore=\""+prevscore+"\">");
+                    if(!topmatches.isEmpty()){
+                            SentencePP spp=topmatches.get(0);
+                            ExtToken [] english=spp.get();
+                            for(ExtToken extk:english){
+                                fw.write(extk.getToken().getText()+" ");
+                            }
+                    }
+                    fw.write("</prevretvd>\n");
+                    
+                    
+                    fw.write("</segment>\n");               
+                  } 
+                    
                    fw.write("</document>");
                    fw.close();
             
@@ -457,9 +651,9 @@ public class EDMatch {
         ReadTargetFile rtf2=new ReadTargetFile(inputtgtfilename);
         ArrayList<String> tgtinput=rtf2.get();
         
-        ReadFile rf=new ReadFile(inputfilename);
+        ReadFile rf=new ReadFile(inputfilename,true);
         ArrayList<Token []> inputtokens=rf.get();
-        ReadFile rf2=new ReadFile(tmsrcfilename);
+        ReadFile rf2=new ReadFile(tmsrcfilename,true);
         ArrayList<Token []> tmsrctokens=rf2.get();
        // ArrayList<MatchStore> matches= new ArrayList();
         
@@ -474,6 +668,39 @@ public class EDMatch {
         return 0;
     }
     
+    private static int efficientparaphrasing(char flag, double th,boolean prepflag, String ppfilename,String tmsrcfilename,String tmtgtfilename,String inputfilename ,String inputtgtfilename,String outfile){
+    
+        long starttime=System.nanoTime();
+
+        ReadTargetFile rtf=new ReadTargetFile(tmtgtfilename);
+        ArrayList<String> tgtTM=rtf.get();
+        ReadFile rf2=new ReadFile(tmsrcfilename,prepflag);
+        ArrayList<Token []> tmsrctokens=rf2.get();
+        CollectPP cpp=new CollectPP(ppfilename, prepflag);
+        HashMap<String, ArrayList<String> > ppdict=cpp.getPPDictionary();
+        
+        System.out.print("PPDICT "+ppdict.entrySet().size());
+        ParaphraseTM cspp=new ParaphraseTM(tmsrctokens,ppdict);
+        ArrayList<SentencePP> alspp=cspp.getSentencePP();
+        ppdict.clear();
+      //  cpp.delete();
+        System.out.println("alspp finished");
+        //alspp.get(200).print();
+        System.out.println();
+        ReadTargetFile rtf2=new ReadTargetFile(inputtgtfilename);
+        ArrayList<String> tgtinput=rtf2.get(); 
+        ReadFile rf=new ReadFile(inputfilename,prepflag);
+        ArrayList<Token []> inputtokens=rf.get();
+        long endtime1=System.nanoTime();
+        System.out.println("Total time in Collecting tokens and parphrases(Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
+        extractMatch(th,100,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);
+        long endtime2=System.nanoTime();
+
+        System.out.println("Total time in EditdistancePP(Seconds)="+TimeUnit.SECONDS.convert(endtime2-endtime1,TimeUnit.NANOSECONDS));
+        System.out.println("Complete time(Seconds)="+TimeUnit.SECONDS.convert(endtime2-starttime,TimeUnit.NANOSECONDS));
+
+        return 0;
+    }
     /**
      * This method use paraphrasing with
      * Edit distance based matching 
@@ -519,7 +746,7 @@ public class EDMatch {
 
         ReadTargetFile rtf=new ReadTargetFile(tmtgtfilename);
         ArrayList<String> tgtTM=rtf.get();
-        ReadFile rf2=new ReadFile(tmsrcfilename);
+        ReadFile rf2=new ReadFile(tmsrcfilename,true);
         ArrayList<Token []> tmsrctokens=rf2.get();
         CollectPP cpp=new CollectPP(ppfilename);
         HashMap<String, ArrayList<String> > ppdict=cpp.getPPDictionary();
@@ -534,7 +761,7 @@ public class EDMatch {
         System.out.println();
         ReadTargetFile rtf2=new ReadTargetFile(inputtgtfilename);
         ArrayList<String> tgtinput=rtf2.get(); 
-        ReadFile rf=new ReadFile(inputfilename);
+        ReadFile rf=new ReadFile(inputfilename,true);
         ArrayList<Token []> inputtokens=rf.get();
         long endtime1=System.nanoTime();
         System.out.println("Total time in Collecting tokens and parphrases(Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
@@ -561,7 +788,7 @@ public class EDMatch {
 
       withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
       */
-    /*    String inputfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2013releaseutf8.en.fil.txt.r200";
+     /*   String inputfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2013releaseutf8.en.fil.txt.r200";
         String tmsrcfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2011_710_12releaseutf8.en.fil.txt.r50000";
        // String tmsrcfilename="//Users//rohit//expert//programs//levdistance//enfrppsTMsrc.txt";
         String tmtgtfilename="//Users//rohit//expert//programs//corpus//oldtests//test8//enfr2011_710_12releaseutf8.fr.fil.txt.r50000";
@@ -570,17 +797,17 @@ public class EDMatch {
         String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt";
         
       withparaphrasing('a',ppfilename, tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
-    */     //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
+     */    //      withoutparaphrasing(tmsrcfilename,tmtgtfilename,inputfilename,inputtgtfilename,outfile);
 
       //  System.out.println("Without PP Finished");
       
-        if(!(args.length==5 || args.length==7)){
+        if(!(args.length==5 || args.length==7 ||args.length==9)){
             System.err.println("Please provide all desired file names and options as follows:\n");
-            System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
+            System.err.println("java -jar EDMatch.jar [-p|-pa [threshold] [-rn] ppfilename] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
             System.exit(1);
         }
         char paraflag='z';
-                if(args.length==7){
+                if(args.length==7 || args.length==9){
                     if(args[0].equals("-p") || args[0].equals("-pa")){
                         paraflag='a';
                     }else {
@@ -593,10 +820,14 @@ public class EDMatch {
             withoutparaphrasing(args[0],args[1],args[2],args[3],args[4]);
         }else if(paraflag!='z' && args.length==7){
             withparaphrasing(paraflag,args[1],args[2],args[3],args[4], args[5], args[6]);
+        }else if(paraflag!='z' && args.length==9){
+            boolean prepflag=false;
+            if(args[2].equals("-rn"))prepflag=true;
+            efficientparaphrasing(paraflag,Double.parseDouble(args[1]),prepflag,args[3],args[4], args[5], args[6],args[7],args[8]);
         }
         else{
             System.err.println("Please provide file names in format as follows:\n");
-            System.err.println("java -jar EDMatch.jar [-p|-pa ppfilename ] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
+            System.err.println("java -jar EDMatch.jar [-p|-pa [threshold] ppfilename ] tmsrcfilename tmtgtfilename inputfilename inputtgtfilename outfile");
             System.exit(1);
         }
        

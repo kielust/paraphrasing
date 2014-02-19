@@ -14,13 +14,19 @@ public class LdPPSPair {
     private final Token[] alt;
     private final short score;
     private final ArrayList<PPPair> pppair;
-    private final short length;
+    private short length;
    public LdPPSPair(Token[] alt,short length,short score,ArrayList<PPPair> pppair){
         this.alt=alt;
         this.score=score;
         this.pppair=pppair;
         this.length=length;
     }
+   public LdPPSPair(){
+       this.alt=null;
+       this.score=100;
+       this.pppair=new ArrayList<PPPair>();
+       this.length=0;
+   }
     
    public short getEditDistance(){
         return score;

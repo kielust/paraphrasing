@@ -84,28 +84,7 @@ public class EDMatchTest {
         fail("The test case is a prototype.");
     }
 
-    /**
-     * Test of extractMatch method, of class EDMatch.
-     */
-    @Test
-    public void testExtractMatch_9args() {
-        System.out.println("extractMatch");
-        HashMap<String, ArrayList<String>> ppdict = null;
-        double th = 0.0;
-        int max = 0;
-        char flag = ' ';
-        ArrayList inputtokens = null;
-        ArrayList tmsrctokens = null;
-        ArrayList<String> tgtTM = null;
-        ArrayList<String> tgtinput = null;
-        String outfile = "";
-        ArrayList<MatchStore> expResult = null;
-        ArrayList<MatchStore> result = EDMatch.extractMatch(ppdict, th, max, flag, inputtokens, tmsrctokens, tgtTM, tgtinput, outfile);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
+   
     /**
      * Test of extractMatch method, of class EDMatch.
      */
