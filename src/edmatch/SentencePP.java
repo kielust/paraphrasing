@@ -85,7 +85,7 @@ public class SentencePP {
  /* Test Code */   
     public static void main(String args[]){
             String ppfilename="//Users//rohit//expert//corpusparaphrase//ppdbsphrasal.txt";
-        CollectPP cpp=new CollectPP(ppfilename);
+        CollectPP cpp=new CollectPP(ppfilename, false);
         HashMap<String, ArrayList<String> > ppdict=cpp.getPPDictionary();
         System.out.println(Arrays.toString(ppdict.keySet().toArray()));
         Token []tk=new Token[5];

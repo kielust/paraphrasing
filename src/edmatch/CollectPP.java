@@ -22,7 +22,15 @@ import edmatch.preprocess.Placeholder;
 public class CollectPP {
     HashMap<String,ArrayList<String> > ppdict=new HashMap();
    static final private  int LIMIT=50; //max allowed paraphases of a phrase 
-    CollectPP(String filename){
+   static final private int MIN_LENGTH=5;//
+   CollectPP(String filename,boolean placeholder){
+       if(placeholder){   // if placeholder flag true
+          collectPPwithPH(filename);
+       }else{
+           collectPP(filename);
+       }
+   }
+    private void  collectPP(String filename){
         try{
             File file=new File(filename);
             Scanner sc=new Scanner(file);
@@ -44,7 +52,7 @@ public class CollectPP {
         }
     }
     
-    CollectPP(String filename, boolean prepflag){
+    private void collectPPwithPH(String filename){
         try{
             File file=new File(filename);
             Scanner sc=new Scanner(file);
@@ -53,10 +61,12 @@ public class CollectPP {
                 String[] strtokens=str.split("\\|\\|\\|");
                 String left=strtokens[1].trim();
                 String strtokens2=strtokens[2].trim();
-                if(prepflag){
+                
                     left=Placeholder.replaceNoAndMonth(left);
                     strtokens2=Placeholder.replaceNoAndMonth(strtokens2);
-                }
+                    
+                if(left.isEmpty()||left.length()<MIN_LENGTH)continue;
+                if(strtokens2.isEmpty()||strtokens2.length()<MIN_LENGTH)continue;
                 ArrayList<String> right=new ArrayList();
                 if (ppdict.containsKey(left)){
                     right=ppdict.get(left);

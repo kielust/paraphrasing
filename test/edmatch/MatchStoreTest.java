@@ -6,7 +6,7 @@
 
 package edmatch;
 
-import edmatch.data.Token;
+import edmatch.data.Match;
 import java.util.ArrayList;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -46,7 +46,7 @@ public class MatchStoreTest {
     @Test
     public void testAdd() {
         System.out.println("add");
-        Token[] target = null;
+        Match target = null;
         MatchStore instance = null;
         instance.add(target);
         // TODO review the generated test code and remove the default call to fail.

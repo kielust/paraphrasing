@@ -16,6 +16,8 @@ public class Placeholder {
 
     /**
      * Replace -LRB-, -RRB-, -lrb-, -rrb-
+     * Replace &amp with amp
+     * Replace remaining & with and 
      * Replace all characters except [a-z0-9%] to "" (nothing)
      * Replace all no's with 'N' and all months with 'MONTH'
      * Sample input: Charles22 date *(90)* /((% of birth is 19th jul 1917 but he died on 20 january 2006 
@@ -26,10 +28,15 @@ public class Placeholder {
     
     public static String replaceNoAndMonth(String sentence){
         
-            Pattern AMP=Pattern.compile("(\\-LRB\\-|\\-RRB\\-|\\-lrb\\-|\\-rrb\\-)");
+            Pattern AMP=Pattern.compile("((\\-LRB\\-)|(\\-RRB\\-)|(\\-lrb\\-)|(\\-rrb\\-))");
             String s=AMP.matcher(sentence).replaceAll("");
-          //  System.out.println(s);
-                
+           // System.out.println(s);
+             AMP=Pattern.compile("(\\&)(amp)"); 
+             s=AMP.matcher(s).replaceAll("amp");
+           //  System.out.println(s);
+             AMP=Pattern.compile("(\\&)"); 
+             s=AMP.matcher(s).replaceAll("and");
+           //  System.out.println(s);
             AMP=Pattern.compile("[^a-z0-9%\\s]");
             s=AMP.matcher(s).replaceAll("");
           //  System.out.println(s);
@@ -42,27 +49,27 @@ public class Placeholder {
             s=AMP.matcher(s).replaceAll("MONTH");
             s=s.replaceAll("\\s+"," ");
             s=s.trim();
-          //  System.out.println(s);
+         //   System.out.println(s);
             return s;
     }
     /**
-     * 19 july 2016
-       july 19, 2016
+     *  19 july 2016
+        july 19, 2016
         19th july 2016
-nineteenth july 2016
-nineteen july 2016
-nineteen july two thousand and sixteen
-nineteen july two thousand & sixteen
-on nineteenth of july in the year 2016
-on 19th of july in the year 2016
-on 19 july in the year 2016
-on 19th july in the year 2016
-on nineteenth july in the year 2016
-19-07-2016
-07-19-2016
-19/07/2016
-07/19/2016
-19/07/16
+        nineteenth july 2016
+        nineteen july 2016
+        nineteen july two thousand and sixteen
+        nineteen july two thousand & sixteen
+        on nineteenth of july in the year 2016
+        on 19th of july in the year 2016
+        on 19 july in the year 2016
+        on 19th july in the year 2016
+        on nineteenth july in the year 2016
+        19-07-2016
+        07-19-2016
+        19/07/2016
+        07/19/2016
+        19/07/16
      * @param sentence
      * @return 
      */
@@ -70,5 +77,11 @@ on nineteenth july in the year 2016
         System.err.print("replaceDate NOT IMPLEMENTED YET");
         System.exit(1);
         return   "";
+    }
+    public static void main(String args[]){
+        String sentence = "& 888290&* He786 &amp; 13th% jan -LRB- -RRB- mar -lrb- 21st 22nd january apr jun aug february march april 2nd may june july august sep october september october oct nov november dec december 1st jul 1986 is 95th feb 1670 mayhem year old 7899 &";
+       // String expResult = "N e786 N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N";
+        String result = Placeholder.replaceNoAndMonth(sentence);
+        
     }
 }

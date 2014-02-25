@@ -44,8 +44,8 @@ public class PlaceholderTest {
     @Test
     public void testReplaceNoAndMonth() {
         System.out.println("replaceNoAndMonth");
-        String sentence = "";
-        String expResult = "";
+        String sentence = "888290&* He786 & 13th% jan -LRB- -RRB- mar -lrb- 21st 22nd january apr jun aug february march april 2nd may june july august sep october september october oct nov november dec december 1st jul 1986 is 95th feb 1670 mayhem year old 7899";
+        String expResult = "N e786 N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N";
         String result = Placeholder.replaceNoAndMonth(sentence);
         assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.

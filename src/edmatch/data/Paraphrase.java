@@ -25,6 +25,8 @@ public class Paraphrase {
         this.src=src.trim();
         this.srcpp=srcpp.trim();
         this.tokenno=tokenno;
+      //  System.out.println(src);
+      //  System.out.println(srcpp);
         lensrc=src.split(" ").length;
         lensrcpp=srcpp.split(" ").length;
         srcpptk=new Token[lensrcpp];

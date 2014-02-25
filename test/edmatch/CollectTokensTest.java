@@ -45,12 +45,12 @@ public class CollectTokensTest {
     @Test
     public void testGet() {
         System.out.println("get");
-        CollectTokens instance = new CollectTokens("888290&* He786 13th% jan-LRB- -RRB- mar-lrb- 21st 22nd january apr jun aug february march april 2nd may june july august sep october september october oct nov november dec december 1st jul 1986 is 95th feb 1670 mayhem year old 7899",true);
-        CollectTokens instance2=new CollectTokens("N e786 N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N",false);
+        CollectTokens instance = new CollectTokens("888290&* He786 & 13th% jan-LRB- -RRB- mar-lrb- 21st 22nd january apr jun aug february march april 2nd may june july august sep october september october oct nov november dec december 1st jul 1986 is 95th feb 1670 mayhem year old 7899",true);
+        CollectTokens instance2=new CollectTokens("N e786 and N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N",false);
         Token[] exptokens = instance2.get();
         Token[] rtokens = instance.get();
        // assertArrayEquals(expResult, result);
-        String expResult="N e786 N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N";
+        String expResult="N e786 and N% MONTH MONTH N N MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH MONTH N MONTH N is N MONTH N mayhem year old N";
         
         String result="";
         
