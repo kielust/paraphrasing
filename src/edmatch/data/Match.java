@@ -12,27 +12,27 @@ import java.util.ArrayList;
  * @author rohit
  */
 public class Match {
-    private ExtToken [] ppmatch;
-    private Token [] edmatch;
-    private double similarity;
-    private int id;
-    private boolean isppused;
-    private boolean isppapplied;
-    private LdPPSPair ldpp;
+    private final ExtToken [] match;
+   // private ExtToken [] edmatch;
+    private final double similarity;
+    private final int id;
+    private final boolean isppused;
+    private final boolean isppapplied;
+    private final LdPPSPair ldpp;
     
     public Match(ExtToken [] ppmatch,int id, double similarity, LdPPSPair ldpp){
-        this.ppmatch=ppmatch;
-        this.edmatch=null;
+        this.match=ppmatch;
+       // this.edmatch=null;
         this.similarity=similarity;
         this.id=id;
         this.isppapplied=true;
         this.isppused= ldpp.getMatchedParaphrases().isEmpty();
         this.ldpp=ldpp;
     }
-   public Match(Token [] edmatch, int id,double similarity){
+   public Match(ExtToken [] edmatch, int id,double similarity){
         this.similarity=similarity;
-        this.edmatch=edmatch;
-        this.ppmatch=null;
+        this.match=edmatch;
+      //  this.ppmatch=null;
         this.id=id;
         isppused=false;
         isppapplied=false;
@@ -56,11 +56,11 @@ public class Match {
    public boolean hasLdPP(){
        return isppapplied;
    }
-   public Token [] getEDMatch(){
-       return edmatch;
+   public ExtToken [] getEDMatch(){
+       return match;
    }
    
    public ExtToken [] getPPMatch(){
-       return ppmatch;
+       return match;
    }
 }

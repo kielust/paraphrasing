@@ -10,6 +10,7 @@ package edmatch.data;
  *
  * @author rohit
  */
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
