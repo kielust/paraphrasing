@@ -47,8 +47,8 @@ public class LdPPSPairTest {
         System.out.println("getEditDistance");
         LdPPSPair instance = null;
         short expResult = 0;
-        short result = instance.getEditDistance();
-        assertEquals(expResult, result);
+     //   short result = instance.getEditDistance();
+      //  assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }

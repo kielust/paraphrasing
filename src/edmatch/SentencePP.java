@@ -21,8 +21,12 @@ import java.util.Arrays;
  */
 public class SentencePP {
     private ExtToken [] extsentence;
-    private static final  int LIMIT=100;  // limit on maximum paraphrases per token
-    SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict){
+   // private static final  int LIMIT=100;  // limit on maximum paraphrases per token
+    SentencePP(ExtToken [] extsentence){
+        this.extsentence= extsentence;
+    }
+    
+  /*  SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict){
         extsentence=new ExtToken[sentence.length];
         for(int i=0;i<sentence.length;i++){
             String src="";
@@ -41,9 +45,9 @@ public class SentencePP {
             ExtToken exttk=new ExtToken(sentence[i],alpp);
             extsentence[i]=exttk;
         }
-    }
+    }*/
     
-    SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict,boolean flag ){
+  /*  SentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict,boolean flag ){
         extsentence=new ExtToken[sentence.length];
         Paraphrase [][]aap=new Paraphrase[sentence.length][LIMIT];
         for(int i=0;i<sentence.length;i++){
@@ -63,7 +67,7 @@ public class SentencePP {
             ExtToken exttk=new ExtToken(sentence[i],alpp);
             extsentence[i]=exttk;
         }
-    }
+    }*/
     
     /**
      * 
@@ -95,7 +99,7 @@ public class SentencePP {
         Token tk4 =new Token("was",0);
         Token tk5 =new Token("enthusiastic",0);
         tk[0]=tk1;tk[1]=tk2;tk[2]=tk3;tk[3]=tk4;tk[4]=tk5;
-        SentencePP spp=new SentencePP(tk,ppdict);
+      /*  SentencePP spp=new SentencePP(tk,ppdict);
         ExtToken []etk=spp.get();
         for(int i=0;i<5;i++){
             String tktext=etk[i].getToken().getText();
@@ -103,7 +107,7 @@ public class SentencePP {
             String tkparaleft=etk[i].getpplist().get(j).getleft();
             String tkpararight=etk[i].getpplist().get(j).getright();
             }
-        }
+        }*/
          
     }
 }

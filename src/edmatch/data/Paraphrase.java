@@ -19,9 +19,10 @@ public class Paraphrase {
     int lensrc;
     int lensrcpp;
     int tokenno;
+    short type;   //1 lexical, 2 phrasal 1diff, 3 phrasal multi
     //double prob;
     //other parameters
-   public Paraphrase(String src, String srcpp,int tokenno){
+   public Paraphrase(String src, String srcpp,int tokenno, short type){
         this.src=src.trim();
         this.srcpp=srcpp.trim();
         this.tokenno=tokenno;
@@ -36,6 +37,10 @@ public class Paraphrase {
             srcpptk[i]=tk;
         }
     }
+   
+   public short getType(){
+       return type;
+   }
    public String getleft(){
         return src;
     }

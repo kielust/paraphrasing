@@ -11,6 +11,7 @@
  */
 package edmatch.matching;
 import edmatch.data.ExtToken;
+import edmatch.EDMatch;
 import edmatch.data.LdPPSPair;
 import edmatch.data.PPPair;
 import edmatch.data.Paraphrase;
@@ -30,6 +31,10 @@ public class LevenshteinDistance100ctd  {
         return (short) Math.min(a, Math.min(b, c));
     }
     
+     private static double minimum(double a, double b, double c) {
+        return  Math.min(a, Math.min(b, c));
+    }
+    
     /** Maximal number of items compared. */
     private static final int MAX_N = 1000;
     /** Maximum number of paraphrases handled for per token */
@@ -39,13 +44,13 @@ public class LevenshteinDistance100ctd  {
      * Cost array, horizontally. Here to avoid excessive allocation and garbage
      * collection.
      */
-    private short[][] d = new short[MAX_PP][MAX_N + 1];
+    private double[][] d = new double[MAX_PP][MAX_N + 1];
     /**
      * "Previous" cost array, horizontally. Here to avoid excessive allocation
      * and garbage collection.
      */
-    private short[][] p = new short[MAX_PP][MAX_N + 1];
-    private short [] d0=new short[MAX_N +1];
+    private double[][] p = new double[MAX_PP][MAX_N + 1];
+    private double[] d0=new double[MAX_N +1];
     
     
     int getmaxtargetsize(ArrayList<Paraphrase> p){
@@ -65,7 +70,7 @@ public class LevenshteinDistance100ctd  {
         return max;
     }
     
-    public LdPPSPair compute(Token[] s, ExtToken[] t) {
+    public LdPPSPair compute(Token[] s, ExtToken[] t, double [] pppenalty ) {
         if (s == null || t == null)
                 throw new IllegalArgumentException();
            // throw new IllegalArgumentException(OStrings.getString("LD_NULL_ARRAYS_ERROR"));
@@ -87,14 +92,14 @@ public class LevenshteinDistance100ctd  {
         //ArrayList<ArrayList<Token> > targetsentencematch= new ArrayList<ArrayList<Token> >();
        //        LinkedList<LinkedList<Token>> targetsentencematch=new LinkedList<LinkedList<Token> >();
 
-        short [][] swap; // placeholder to assist in swapping p and d
+        double [][] swap; // placeholder to assist in swapping p and d
         // indexes into strings s and t
         short i; // iterates through s
         short j; // iterates through t
         ExtToken t_j = null; // jth object of t
-        ExtToken t_jpext=new ExtToken();
-        short cost; // cost
-
+      //  ExtToken t_jpext=new ExtToken();
+       // short cost; // cost
+        double cost;
         for (i = 0; i <= n; i++)
             p[0][i] = i;
         int maxts=0;
@@ -124,18 +129,19 @@ public class LevenshteinDistance100ctd  {
             if((flag==false)){
                 maxts=0; //reset 
                 noiter=1; //reset
-                t_jpext=null; 
+            //    t_jpext=null; 
                 maxtscount=1;
-            if((j<=n)&&(!t_j.getpplist().isEmpty())){
+            if((j<=n)&&(!EDMatch.getUsedPPbyKey(t_j.getKey()).isEmpty())){
                 flag=true;
                 oldj=j;
                 oldeffj=effj;
-                maxtgt=getmaxtargetsize(t_j.getpplist());
-                maxsrc=getmaxsourcesize(t_j.getpplist());
+                alpp=EDMatch.getUsedPPbyKey(t_j.getKey());
+                maxtgt=getmaxtargetsize(alpp);
+                maxsrc=getmaxsourcesize(alpp);
                 maxts=Math.max(maxtgt, maxsrc);
-                alpp=t_j.getpplist();
-                noiter=1+t_j.getpplist().size();
-                t_jpext=t_j;
+               // alpp=t_j.getpplist();
+                noiter=1+alpp.size();
+              //  t_jpext=t_j;
           //      for(int pin=1;pin<noiter;pin++){
           //          offset[pin]=(short)(alpp.get(pin-1).noOfWordsSrcPP()-alpp.get(pin-1).noOfWordsSrc());
           //      }
@@ -148,7 +154,7 @@ public class LevenshteinDistance100ctd  {
                 if(pind>0){
                     ////////backup d0/////
                     if(flag==true ){
-                     int lensrc=t_jpext.getpplist().get(pind-1).noOfWordsSrc();
+                     int lensrc=alpp.get(pind-1).noOfWordsSrc();
                      if((oldj+lensrc-1)==j ||(oldj+lensrc-1)==n){
                         
                         int valj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1);
@@ -175,9 +181,12 @@ public class LevenshteinDistance100ctd  {
                 Token s_i ;//= null; // ith object of s
              if(t_jp.isvalid()){   //when j>m
              //    System.out.println("   j="+j+" pind="+pind);
+                 short typep=0;
+                 if(flag==true && pind>0){typep=alpp.get(pind-1).getType();}
                  for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
+                    if(typep!=0 && cost==0){cost=cost+pppenalty[typep];}
                     // minimum of cell to the left+1, to the top+1, diagonally left
                     // and up +cost
                     if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost); //use p of basic 
@@ -194,14 +203,14 @@ public class LevenshteinDistance100ctd  {
             }
             if((maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14, changed on 7 feb 18:13 
                 int ind=0;
-                int mindistance=500;
+                double mindistance=500;
                 //mindistance= (j>n) ? d[0][n] : mindistance;
                 int validj;//= (effj>n)? n :effj;
                 //mindistance= (j<=m && j<=n) ? d[0][j] : d[0][m];  //why m
                // mindistance=d[0][validj];
                 boolean ppwin=false;
                 for(int pind=1; pind<noiter;pind++){                    
-                    int lenpp=t_jpext.getpplist().get(pind-1).noOfWordsPP();
+                    int lenpp=alpp.get(pind-1).noOfWordsPP();
                     validj=( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1); 
                     if(d[pind][validj]<=mindistance){
                         mindistance=d[pind][validj];
@@ -209,7 +218,7 @@ public class LevenshteinDistance100ctd  {
                         ppwin=true;
                  //       offset_j=offset[pind];
                     }
-                    int lensrc=t_jpext.getpplist().get(pind-1).noOfWordsSrc();
+                    int lensrc=alpp.get(pind-1).noOfWordsSrc();
                     validj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1); 
                     if(d0[validj]<=mindistance){
                         mindistance=d0[validj];
@@ -227,14 +236,14 @@ public class LevenshteinDistance100ctd  {
                        // Token temp=targetsentencematch.get(ind).get(k);
              //           targetsentencematch[0][k]=targetsentencematch[ind][k];
              //      }
-                    for(int k=0;k<t_jpext.getpplist().get(ind-1).noOfWordsPP();k++){
-                        targetsentencematch[matchindex++]=t_jpext.getpplist().get(ind-1).getpptokenAtIndex(k);                                               
+                    for(int k=0;k<alpp.get(ind-1).noOfWordsPP();k++){
+                        targetsentencematch[matchindex++]=alpp.get(ind-1).getpptokenAtIndex(k);                                               
                     }
                     //System.arraycopy(targetsentencematch[ind], j+p_off_j-maxts, targetsentencematch[0], j+p_off_j-maxts, j+p_off_j - (j+p_off_j-maxts));
                  //   if(offset_j>0)j=(short)(j-offset_j);
                 //    p_off_j+=offset_j;
-                    effj=(short)(oldeffj-1+t_jpext.getpplist().get(ind-1).noOfWordsSrc());
-                    j=(short)(oldj-1+t_jpext.getpplist().get(ind-1).noOfWordsPP());
+                    effj=(short)(oldeffj-1+alpp.get(ind-1).noOfWordsSrc());
+                    j=(short)(oldj-1+alpp.get(ind-1).noOfWordsPP());
 
                    // if(offset_j<0)effj=effj+offset_j;
                 }else{
@@ -257,7 +266,7 @@ public class LevenshteinDistance100ctd  {
             swap = p;
             p = d;
             //short [][]swap2;
-            d = new short[MAX_PP][MAX_N+1];   //boundry condition when j >= m, saving last value of d
+            d = new double[MAX_PP][MAX_N+1];   //boundry condition when j >= m, saving last value of d
             for(int dum=0;dum<MAX_PP;dum++){
                 for(int dum2=0;dum2<MAX_N+1;dum2++){
                     d[dum][dum2]=500;

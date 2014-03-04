@@ -116,8 +116,8 @@ public class EDMatchTest {
         ArrayList<String> tgtinput = null;
         String outfile = "";
         int expResult = 0;
-        int result = EDMatch.extractMatch(flag, inputtokens, tmsrcexttokens, tgtTM, tgtinput, outfile);
-        assertEquals(expResult, result);
+     //   int result = EDMatch.extractMatch(flag, inputtokens, tmsrcexttokens, tgtTM, tgtinput, outfile);
+    //    assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }

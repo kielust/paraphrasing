@@ -12,15 +12,16 @@ import java.util.ArrayList;
  */
 public class LdPPSPair {
     private final Token[] alt;
-    private final short score;
+    private final double score;
     private final ArrayList<PPPair> pppair;
     private short length;
-   public LdPPSPair(Token[] alt,short length,short score,ArrayList<PPPair> pppair){
+   public LdPPSPair(Token[] alt,short length,double score,ArrayList<PPPair> pppair){
         this.alt=alt;
         this.score=score;
         this.pppair=pppair;
         this.length=length;
     }
+   
    public LdPPSPair(){
        this.alt=null;
        this.score=100;
@@ -28,7 +29,7 @@ public class LdPPSPair {
        this.length=0;
    }
     
-   public short getEditDistance(){
+   public double getEditDistance(){
         return score;
     }
    public ArrayList<PPPair> getMatchedParaphrases(){

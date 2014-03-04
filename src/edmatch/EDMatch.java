@@ -11,11 +11,12 @@ import edmatch.data.ExtToken;
 import edmatch.data.Token;
 import edmatch.data.LdPPSPair;
 import edmatch.data.Match;
-import edmatch.matching.LevenshteinDistancePPall;
+import edmatch.data.Paraphrase;
+//import edmatch.matching.LevenshteinDistancePPall;
 import edmatch.matching.LevenshteinDistance;
 //import edmatch.matching.LevenshteinDistance100;
 import edmatch.matching.LevenshteinDistance100ctd;
-import edmatch.matching.LevenshteinDistance200;
+//import edmatch.matching.LevenshteinDistance200;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,13 @@ public class EDMatch {
      * @param cand
      */
     
+   static  HashMap<String , ArrayList<Paraphrase> > usedPP=null;
     
+   public static ArrayList<Paraphrase> getUsedPPbyKey(String key){
+       if(key==null)return null;
+        return usedPP.get(key);
     
+    }
     public static double calcSimilarity(final Token[] str,
             final Token cand[]) {
         LevenshteinDistance dc= new LevenshteinDistance();
@@ -72,6 +78,14 @@ public class EDMatch {
         return similarity;
     }
     
+    public static double calcSimilarityPP(int str,int cand, double score
+            ) {
+        
+        double similarity = (100.0 * (Math.max(str, cand) - score)) / Math.max(str, cand);
+       // System.out.println("ED:"+score+"Sim:"+similarity+" input:"+str+" Match:"+cand);
+        return similarity;
+    }
+    
     /**
      *
      * @param tks token
@@ -80,9 +94,9 @@ public class EDMatch {
     
     static void printtokens(Token [] tks){
         for (Token tk : tks) {
-            System.out.print(tk.getText() + " ");
+            System.err.print(tk.getText() + " ");
         }
-        System.out.println();
+        System.err.println();
     }
     
     
@@ -134,11 +148,11 @@ public class EDMatch {
                 int sno=-1;
                 fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 fw.write("<document>");
-                System.out.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
+                System.err.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
                 for(Token [] sen:inputtokens){
                        MatchStore m=new MatchStore(sen);
                     sno++;
-                    System.out.print("Executing->"+sno+" :");
+                    System.err.print("Executing->"+sno+" :");
                     printtokens(sen);
                     
                     //double maxsim=0.0;
@@ -160,16 +174,16 @@ public class EDMatch {
                         }
                         index++;
                     }
-                    System.out.println(thmatches.size());
+                    System.err.println(thmatches.size());
                     Collections.sort(thmatches);
                     Collections.reverse(thmatches);
                     ArrayList<SentencePP> topmatches=new ArrayList();
                     if(!thmatches.isEmpty()){
                         double maxsim=thmatches.get(0).sim;
-                        System.out.print("maxsim="+maxsim+" :");
+                        System.err.print("maxsim="+maxsim+" :");
                         for(int i=0;i<nbest && i<thmatches.size() && beamTH>=(maxsim-thmatches.get(i).sim); i++){
                                 //System.out.println("th="+th+" "+maxsim+" "+thmatches.get(i).sim+" "+);
-                                System.out.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
+                                System.err.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
                           //      printtokens(tmsrctokens.get(thmatches.get(i).index));
                             topmatches.add(tmsrcexttokens.get(thmatches.get(i).index));
                             
@@ -181,12 +195,13 @@ public class EDMatch {
                     index=0;
                     //System.out.print("Processing:");
                     int tmsno=0;
+                    double [] pppenalty=new double[4];
                     for(SentencePP tmsen:topmatches){
-                        System.out.print(++tmsno+"=");
+                        System.err.print(++tmsno+"=");
                         LdPPSPair ldpair;
                         double sim;
                             LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
-                            ldpair = dc.compute(sen,tmsen.get());
+                            ldpair = dc.compute(sen,tmsen.get(),pppenalty);
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
                         // printtokens(tmsen);
@@ -235,6 +250,7 @@ public class EDMatch {
                     int id=-1;
                     if(!topmatches.isEmpty()){
                         String french=tgtTM.get(thmatches.get(maxmatchid).index);
+                        System.out.println(french);
                         id=thmatches.get(maxmatchid).index;
                     fw.write(french);}
                     fw.write("</retvd>\n");
@@ -327,7 +343,7 @@ public class EDMatch {
      * @return 
     */
     
-    static ArrayList<MatchStore>  extractMatchDouble(double lenTH,double beamTH, int max, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<SentencePP> tmsrcexttokens, ArrayList<String> tgtTM,ArrayList<String> tgtinput, String outfile){
+ /*   static ArrayList<MatchStore>  extractMatchDouble(double lenTH,double beamTH, int max, ArrayList<Token []> inputtokens, ArrayList<Token []> tmsrctokens,ArrayList<SentencePP> tmsrcexttokens, ArrayList<String> tgtTM,ArrayList<String> tgtinput, String outfile){
         ArrayList<MatchStore> listms=new ArrayList();
              
             class match implements Comparable<match> {
@@ -406,8 +422,9 @@ public class EDMatch {
                         
                         LdPPSPair ldpair2;
                         double sim2;
-                            
-                            LevenshteinDistance200 dc2= new LevenshteinDistance200();
+                            System.err.println("Double Not implemented yet");
+                            System.exit(1);
+                            LevenshteinDistance100ctd dc2= new LevenshteinDistance100ctd();
                             ldpair2 = dc2.compute(reverse(sen),reverse(tmsen.get()));
                             if(ldpair2==null)continue;
                             sim2=calcSimilarityPP(sen.length,ldpair2.length(),ldpair2.getEditDistance());
@@ -543,11 +560,11 @@ public class EDMatch {
                 int sno=-1;
                 fw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
                 fw.write("<document>");
-                System.out.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
+                System.err.println("TM size "+tmsrctokens.size()+" Input size "+inputtokens.size());
                 for(Token [] sen:inputtokens){
                     //   MatchStore m=new MatchStore(sen);
                     sno++;
-                    System.out.print("Executing->"+sno+" :");
+                    System.err.print("Executing->"+sno+" :");
                     printtokens(sen);
                     
                     //double maxsim=0.0;
@@ -568,16 +585,16 @@ public class EDMatch {
                         }
                         index++;
                     }
-                    System.out.println(thmatches.size());
+                    System.err.println(thmatches.size());
                     Collections.sort(thmatches);
                     Collections.reverse(thmatches);
                     ArrayList<SentencePP> topmatches=new ArrayList();
                     if(!thmatches.isEmpty()){
                         double maxsim=thmatches.get(0).sim;
-                        System.out.print("maxsim="+maxsim+" :");
+                       // System.out.print("maxsim="+maxsim+" :");
                         for(int i=0;i<nbest && i<thmatches.size() && beamTH>=(maxsim-thmatches.get(i).sim); i++){
                                 //System.out.println("th="+th+" "+maxsim+" "+thmatches.get(i).sim+" "+);
-                                System.out.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
+                                System.err.print(thmatches.get(i).index+" "+thmatches.get(i).sim+":");
                           //      printtokens(tmsrctokens.get(thmatches.get(i).index));
                             topmatches.add(tmsrcexttokens.get(thmatches.get(i).index));
                         }
@@ -588,12 +605,14 @@ public class EDMatch {
                     index=0;
                     //System.out.print("Processing:");
                     int tmsno=0;
+                    double [] pppenalty=new double[4];
+                    
                     for(SentencePP tmsen:topmatches){
-                        System.out.print(++tmsno+"=");
+                        System.err.print(++tmsno+"=");
                         LdPPSPair ldpair;
                         double sim;
                             LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
-                            ldpair = dc.compute(sen,tmsen.get());
+                            ldpair = dc.compute(sen,tmsen.get(),pppenalty);
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
                         // printtokens(tmsen);
@@ -634,6 +653,7 @@ public class EDMatch {
                     int id=-1;
                     if(!topmatches.isEmpty()){
                         String french=tgtTM.get(thmatches.get(maxmatchid).index);
+                        System.out.println(french);
                         id=thmatches.get(maxmatchid).index;
                     fw.write(french);}
                     fw.write("</retvd>\n");
@@ -701,7 +721,7 @@ public class EDMatch {
                 for(Token [] sen:inputtokens){
                     //   MatchStore m=new MatchStore(sen);
                     sno++;
-                    System.out.print("Executing->"+sno+" :");
+                    System.err.print("Executing->"+sno+" :");
                     printtokens(sen);
                     
                     double maxsim=0.0;
@@ -767,7 +787,7 @@ public class EDMatch {
      * @return 
      */
     
-    static int extractMatch(char flag, ArrayList<Token []> inputtokens, ArrayList<SentencePP> tmsrcexttokens,ArrayList<String> tgtTM, ArrayList<String> tgtinput, String outfile){
+ /*   static int extractMatch(char flag, ArrayList<Token []> inputtokens, ArrayList<SentencePP> tmsrcexttokens,ArrayList<String> tgtTM, ArrayList<String> tgtinput, String outfile){
         try{
             FileWriter fw = new FileWriter(outfile);
                 int sno=-1;
@@ -798,7 +818,9 @@ public class EDMatch {
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
                         }else {
-                            LevenshteinDistancePPall dc= new LevenshteinDistancePPall();
+                            System.err.println("All not implemented yet");
+                            System.exit(1);
+                            LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
                             ldpair = dc.compute(sen,tmsen.get());
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());                        
@@ -818,7 +840,7 @@ public class EDMatch {
                         fw.write(tmsen[i].getText()+" ");
                         fw.write("\n");
                         }*/
-                        index++;
+     /*                   index++;
                         
                     }
                     System.out.println();
@@ -866,7 +888,7 @@ public class EDMatch {
             }
         return 0;
     }
-    
+    */
 
     
     private static int efficientparaphrasing(boolean enabledouble,boolean placeholder, boolean paraphrasing, boolean filtering,  double lenTH,double beamTH, double tmTH,int nbest, String ppfilename,String tmsrcfilename,String tmtgtfilename,String inputfilename ,String inputtgtfilename,String outfile){
@@ -890,39 +912,47 @@ public class EDMatch {
         // read PP dictionary and collect Paraphrases
         CollectPP cpp=new CollectPP(ppfilename, placeholder);
         HashMap<String, ArrayList<String> > ppdict=cpp.getPPDictionary();        
-        System.out.print("PPDICT "+ppdict.entrySet().size());
+        System.err.print("PPDICT "+ppdict.entrySet().size());
         // Paraphrase translation memory
         ParaphraseTM cspp=new ParaphraseTM(tmsrctokens,ppdict);
         ArrayList<SentencePP> alspp=cspp.getSentencePP();
+        usedPP=cspp.getUsedPPDictionary();
         // delete PP dictionary
         ppdict.clear();
-        System.out.println("alspp finished");
+        System.err.println("alspp finished");
         //alspp.get(200).print();
-        System.out.println();
+        System.err.println();
         
         endtime1=System.nanoTime();
-        System.out.println("Total time in Collecting tokens and parphrases(Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
+        System.err.println("Total time in Collecting tokens and parphrases(Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
         
         if(!filtering){  //without filtering executing old code
                 System.err.println("Error:Fltering is off, execution will be too slow");
                 System.err.println("Calling ExtractMatch with filtering off");
-                extractMatch('a',inputtokens,alspp,tgtTM,tgtinput,outfile);
+             //   extractMatch('a',inputtokens,alspp,tgtTM,tgtinput,outfile);
+                            System.err.println("NOT implemented");
+
         }else{   //with filtering     
         
         if(enabledouble){
             System.err.println("Calling: extractMatchDouble filtering:"+filtering+" placeholder:"+placeholder);
-            extractMatchDouble(lenTH,beamTH, nbest,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);}
+            System.err.println("NOT implemented");
+           // extractMatchDouble(lenTH,beamTH, nbest,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);
+        }
             else if(tmTH>0.0){
                 System.err.println("Calling: extractMatchAboveTH filtering:"+filtering+" placeholder:"+placeholder);
                 extractMatchAboveTH(lenTH,beamTH, tmTH, nbest,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);}
             else {
                 System.err.println("Calling: extractTopMatchOnly filtering:"+filtering+" placeholder:"+placeholder);
-                extractTopMatchOnly(lenTH,beamTH, nbest,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);}
+                            System.err.println("NOT implemented");
+
+               // extractTopMatchOnly(lenTH,beamTH, nbest,inputtokens,tmsrctokens, alspp,tgtTM,tgtinput,outfile);
+            }
         }
         }else {    // without paraphrasing
             endtime1=System.nanoTime();
             if(!filtering){
-                System.out.println("Total time in Collecting tokens (Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
+                System.err.println("Total time in Collecting tokens (Seconds)="+TimeUnit.SECONDS.convert(endtime1-starttime,TimeUnit.NANOSECONDS));
                 System.err.println("Calling ExtractMatch with filtering off, simple edit-distance, placeholder:"+placeholder);
                 extractMatch(inputtokens,tmsrctokens,tgtTM,tgtinput,outfile);
             }else {
@@ -932,8 +962,8 @@ public class EDMatch {
         
         }
         long endtime2=System.nanoTime();        
-        System.out.println("Total time in EditdistancePP(Seconds)="+TimeUnit.SECONDS.convert(endtime2-endtime1,TimeUnit.NANOSECONDS));
-        System.out.println("Complete time(Seconds)="+TimeUnit.SECONDS.convert(endtime2-starttime,TimeUnit.NANOSECONDS));
+        System.err.println("Total time in EditdistancePP(Seconds)="+TimeUnit.SECONDS.convert(endtime2-endtime1,TimeUnit.NANOSECONDS));
+        System.err.println("Complete time(Seconds)="+TimeUnit.SECONDS.convert(endtime2-starttime,TimeUnit.NANOSECONDS));
 
         return 0;
     }
@@ -954,8 +984,8 @@ public class EDMatch {
         double lenTH=50.0;
         double beamTH=35.0;
         double tmTH=70.0;
-        
-     /*   args=new String[20];
+    /*    
+        args=new String[20];
         args[0]="-bth";
         args[1]="35.0";
         args[2]="-lth";
@@ -976,7 +1006,7 @@ public class EDMatch {
         args[17]="//Users//rohit//expert//programs//corpus//test12//2013.fr.txt";
         args[18]="-o";
         args[19]="//Users//rohit//expert//programs//corpus//test12//2013tmp.xml";
-       */
+      */ 
         for(int i=0;i<args.length;i++){
             
            // System.err.println("Processing:"+args[i]);
