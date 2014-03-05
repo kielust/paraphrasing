@@ -891,7 +891,7 @@ public class EDMatch {
     */
 
     
-    private static int efficientparaphrasing(boolean enabledouble,boolean placeholder, boolean paraphrasing, boolean filtering,  double lenTH,double beamTH, double tmTH,int nbest, String ppfilename,String tmsrcfilename,String tmtgtfilename,String inputfilename ,String inputtgtfilename,String outfile){
+    private static int efficientparaphrasing(short [] types, boolean enabledouble,boolean placeholder, boolean paraphrasing, boolean filtering,  double lenTH,double beamTH, double tmTH,int nbest, String ppfilename,String tmsrcfilename,String tmtgtfilename,String inputfilename ,String inputtgtfilename,String outfile){
     
         long starttime=System.nanoTime();
         // read input source file
@@ -914,7 +914,7 @@ public class EDMatch {
         HashMap<String, ArrayList<String> > ppdict=cpp.getPPDictionary();        
         System.err.print("PPDICT "+ppdict.entrySet().size());
         // Paraphrase translation memory
-        ParaphraseTM cspp=new ParaphraseTM(tmsrctokens,ppdict);
+        ParaphraseTM cspp=new ParaphraseTM(tmsrctokens,ppdict, types);
         ArrayList<SentencePP> alspp=cspp.getSentencePP();
         usedPP=cspp.getUsedPPDictionary();
         // delete PP dictionary
@@ -984,8 +984,9 @@ public class EDMatch {
         double lenTH=50.0;
         double beamTH=35.0;
         double tmTH=70.0;
-    /*    
-        args=new String[20];
+        short [] typp={1,2,3,4};
+      /*  
+        args=new String[22];
         args[0]="-bth";
         args[1]="35.0";
         args[2]="-lth";
@@ -995,7 +996,7 @@ public class EDMatch {
         args[6]="-tmth";
         args[7]="65.00";
         args[8]="-pp";
-        args[9]="//Users//rohit//expert//corpusparaphrase//lexlallp+l.txt";
+        args[9]="//Users//rohit//expert//corpusparaphrase//ppdbllexlphrasal.txt";
         args[10]="-tms";
         args[11]="//Users//rohit//expert//programs//corpus//test12//2011.en.txt";
         args[12]="-tmt";
@@ -1006,7 +1007,9 @@ public class EDMatch {
         args[17]="//Users//rohit//expert//programs//corpus//test12//2013.fr.txt";
         args[18]="-o";
         args[19]="//Users//rohit//expert//programs//corpus//test12//2013tmp.xml";
-      */ 
+        args[20]="-typp";
+        args[21]="1,2";
+       */
         for(int i=0;i<args.length;i++){
             
            // System.err.println("Processing:"+args[i]);
@@ -1034,6 +1037,18 @@ public class EDMatch {
                 if(args.length<=i+1||args[i+1].startsWith("-")){
                     System.err.println("Please provide TM target file name");
                 }else {tmtgtfilename=args[++i];}
+            }
+            else if("-typp".equals(args[i])){
+                if(args.length<=i+1||args[i+1].startsWith("-")){
+                    System.err.println("Please provide TM target file name");
+                }else {String sttypp=args[++i];
+                    String [] typpl=sttypp.split(",");
+                    short [] stypp=new short[typpl.length];
+                    for(int intypp=0;intypp<stypp.length;intypp++){
+                        stypp[intypp]=(short)(Integer.parseInt(typpl[intypp]));
+                    }
+                    typp=stypp;
+                }
             }
             else if("-ins".equals(args[i])){
                 if(args.length<=i+1||args[i+1].startsWith("-")){
@@ -1087,6 +1102,11 @@ public class EDMatch {
         System.err.println("enabledouble:"+enabledouble);
         System.err.println("placeholder:"+placeholder);
         System.err.println("paraphrasing:"+paraphrasing);
+        System.err.print("Types:");
+        for(int indxp=0;indxp<typp.length;indxp++){
+            System.err.print(typp[indxp]+" ");
+        }
+        System.err.println();
         System.err.println("filtering:"+filtering);
         System.err.println("lenTH:"+lenTH);
         System.err.println("beamTH:"+beamTH);
@@ -1098,7 +1118,7 @@ public class EDMatch {
         System.err.println("inputfilename:"+inputfilename);
         System.err.println("inputtgtfilename:"+inputtgtfilename);
         System.err.println("outfilename:"+outfilename);
-        efficientparaphrasing(enabledouble,placeholder,paraphrasing, filtering,lenTH,beamTH,tmTH,nbestsize,ppfilename,tmsrcfilename,tmtgtfilename,inputfilename ,inputtgtfilename,outfilename);        
+        efficientparaphrasing(typp,enabledouble,placeholder,paraphrasing, filtering,lenTH,beamTH,tmTH,nbestsize,ppfilename,tmsrcfilename,tmtgtfilename,inputfilename ,inputtgtfilename,outfilename);        
       
        
     }

@@ -181,12 +181,12 @@ public class LevenshteinDistance100ctd  {
                 Token s_i ;//= null; // ith object of s
              if(t_jp.isvalid()){   //when j>m
              //    System.out.println("   j="+j+" pind="+pind);
-                 short typep=0;
-                 if(flag==true && pind>0){typep=alpp.get(pind-1).getType();}
+            //     short typep=0;
+           //      if(flag==true && pind>0){typep=alpp.get(pind-1).getType();}
                  for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
-                    if(typep!=0 && cost==0){cost=cost+pppenalty[typep];}
+                  //  if(typep!=0 && cost==0){cost=cost+pppenalty[typep];}
                     // minimum of cell to the left+1, to the top+1, diagonally left
                     // and up +cost
                     if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost); //use p of basic 

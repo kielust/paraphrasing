@@ -22,7 +22,7 @@ import edmatch.preprocess.Placeholder;
 public class CollectPP {
     HashMap<String,ArrayList<String> > ppdict=new HashMap();
    static final private  int LIMIT=500; //max allowed paraphases of a phrase 
-   static final private int MIN_LENGTH=5;//
+   static final private int MIN_LENGTH=2;//
    CollectPP(String filename,boolean placeholder){
        if(placeholder){   // if placeholder flag true
           collectPPwithPH(filename);

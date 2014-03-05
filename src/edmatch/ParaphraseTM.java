@@ -8,7 +8,10 @@ package edmatch;
 import edmatch.data.ExtToken;
 import edmatch.data.Paraphrase;
 import edmatch.data.Token;
+import edmatch.data.ppType;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.Map.Entry;
 import java.util.HashMap;
 /*collect all paraphrased sentences using sentencePP and ReadFile */
 /**
@@ -18,37 +21,97 @@ import java.util.HashMap;
 public class ParaphraseTM {
     ArrayList<SentencePP> spplist=new ArrayList();
     HashMap<String, ArrayList<Paraphrase>> usedPP=new HashMap();
-    private static final  int LIMIT=100;  // limit on maximum paraphrases per token
+    private static final  int LIMIT=500;  // limit on maximum paraphrases per token
     
-    ParaphraseTM(ArrayList<Token []> sentences, HashMap<String, ArrayList<String>> ppdict){
+    ParaphraseTM(ArrayList<Token []> sentences, HashMap<String, ArrayList<String>> ppdict, short [] types){
         for(Token [] sentence:sentences){
             
-            ExtToken [] sext=sentencePP(sentence,ppdict);
+            ExtToken [] sext=sentencePP(sentence,ppdict,types);
             SentencePP spp=new SentencePP(sext);
             spplist.add(spp);
         }
+        
+          for(String  ke:usedPP.keySet()){
+            System.err.print("KEY:"+ke);
+           for(Paraphrase pp: usedPP.get(ke)){
+               System.err.print(" Type:"+pp.getType()+" S:"+pp.getleft()+" T:"+pp.getright()+" |");
+           }
+           System.err.println();
+        }
+      
     }
     ArrayList<SentencePP> getSentencePP(){
         return spplist;
     }
     
-    short getType(String src, String s){
+    
+    
+    ppType getType(String src, String s){
+        src=src.trim();
+        s=s.trim();
         String [] srcl=src.split(" ");
         String [] tarl=s.split(" ");
-        if(srcl.length!=tarl.length) return (short)3;
-        else {
+        ppType ppt;
+        int start=0;
+            int back=0;
+        //    int index=0;
+            String left="";
+            String right="";
+            for(int i=0;i<srcl.length && i<tarl.length;i++){
+                if(!srcl[i].equals(tarl[i]))
+                {
+                    start=i;
+                    break;
+                }
+            }
+            for(int i=srcl.length, j=tarl.length; i>0 && j>0;i--, j--){
+                if(srcl[i-1].equals(tarl[j-1]))back++;
+                else {
+                    break;
+                }
+            }
             int slen=srcl.length;
-            int tlen=srcl.length;
-            for(int i=0;i<srcl.length;i++){
-                if(srcl[i].equals(tarl[i]))slen--;
+            int tlen=tarl.length;
+            
+            slen=srcl.length-start-back;
+            tlen=tarl.length-start-back;
+            if(slen==0||tlen==0){
+                if(back>0){
+                    back--;    // ABC->AC or ABC->BC
+                    slen++;tlen++;
+                }else{
+                    start--;    //ABC->AB
+                  //  slen++;tlen++;
+                }
             }
-            if(slen==1){
-                if(srcl.length==1) return 1;
-                else return (short)2;
+            for(int i=start;i<start+slen;i++){
+                left=left+srcl[i]+" ";
             }
-            return (short)0;
+            for(int i=start;i<start+tlen;i++){
+                right=right+tarl[i]+" ";
+            }
+            left=left.trim();
+            right=right.trim();
+        if(srcl.length!=tarl.length){                        
+            ppt = new ppType(left,right,start,slen,tlen, (short)4 );            
+            return ppt;
+        }
+        else {
+            if(srcl.length==1){
+                    ppt = new ppType(left,right,start,slen,tlen, (short)1 );
+                    return ppt;
+            }else {
+                if(slen==1 && tlen==1){
+                    ppt = new ppType(left,right,start,slen,tlen, (short)2 );
+                    return ppt;
+                }else{
+                    ppt = new ppType(left,right,start,slen,tlen, (short)3 );
+                    return ppt;
+                }
+            }
         }
     }
+   /* 
     ExtToken[] sentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict){
         ExtToken [] extsentence;
     
@@ -65,8 +128,8 @@ public class ParaphraseTM {
                     key=src;
                     ArrayList<String> als=ppdict.get(src);
                     for(String s:als){
-                        short type=getType(src,s);
-                        Paraphrase pp=new Paraphrase(src,s,i,type);
+                        ppType ppt=getType(src,s);
+                        Paraphrase pp=new Paraphrase(src,s,i,ppt.getType());
                         alpp.add(pp);
                     }
                 }
@@ -75,6 +138,76 @@ public class ParaphraseTM {
             usedPP.put(key, alpp);
             extsentence[i]=exttk;
         }
+        return extsentence;
+    }*/
+    
+    ExtToken[] sentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict, short[] types){
+        ExtToken [] extsentence;
+            Paraphrase [][]aap=new Paraphrase[sentence.length][LIMIT];
+            int [] aapin=new int[sentence.length];
+            String [] key=new String[sentence.length];
+            for(int si=0;si<sentence.length;si++){
+                key[si]="||N||A||";
+            }
+        extsentence=new ExtToken[sentence.length];
+        for(int i=0;i<sentence.length;i++){
+            String src="";
+            //String key="||N||A||";
+          ///  ArrayList<Paraphrase> alpp=new ArrayList();
+            //Paraphrase [] alpp = new Paraphrase[LIMIT];
+            for(int j=i;j<sentence.length;j++){
+                if(aapin[i]<LIMIT){
+                src=src+" "+sentence[j].getText();
+                src=src.trim();
+         //       System.err.println("Input-> Src:"+src);
+                if(ppdict.containsKey(src)){
+                    if(key[i].contains("NA")){
+                        if(key[i].contains("FFFF")){
+                            String [] kel=key[i].split("FFFF");
+                            key[i]=kel[0]+"FFFF"+src;
+                        }else{
+                            key[i]=key[i]+"FFFF"+src;
+                        }
+                    }
+                    else key[i]=src;
+              //      System.err.println("KeyNow:"+key[i]+"\n----\n");
+                    ArrayList<String> als=ppdict.get(src);
+                    for(String s:als){
+                        ppType ppt=getType(src,s);
+                        if(ppt.getType()==1||ppt.getType()==2){
+                    //    System.err.println("Type:"+ppt.getType()+" Index:"+ppt.getIndex()+" LS:"+ppt.getSrclen()+" LT:"+ppt.getTgtlen()+" S:"+ppt.getLeft()+" T:"+ppt.getRight());
+                        Paraphrase pp;
+                    //    if(ppt.getType()==(short)2 ){
+                            pp=new Paraphrase(ppt.getLeft(),ppt.getRight(),i,ppt.getType());
+                            aap[i+ppt.getIndex()][aapin[i+ppt.getIndex()]]=pp;
+                            aapin[i+ppt.getIndex()]=aapin[i+ppt.getIndex()] +1;
+                            if(key[i+ppt.getIndex()].equals("||N||A||")){
+                                key[i+ppt.getIndex()]=src+"NA"+ppt.getLeft();
+                            }
+                     //   }//else{
+                         //   pp=new Paraphrase(src,s,i,ppt.getType());
+                        //    aap[i][ aapin[i] ]=pp;
+                       //     aapin[i]=aapin[i] +1;
+                           // alpp.add(pp);
+                      //  }
+                     }
+                  }
+                }
+            }
+             }
+         }
+        for(int i=0;i<sentence.length;i++){
+            ExtToken exttk=new ExtToken(sentence[i],key[i]);
+            System.err.print(key[i]+" ||| ");
+            ArrayList<Paraphrase> alpp=new ArrayList();
+           // System.err.println(aap[i].length);
+            for(int k=0;k<aap[i].length && k<aapin[i];k++){
+                alpp.add(aap[i][k]);
+            }
+            usedPP.put(key[i], alpp);
+            extsentence[i]=exttk;
+        }
+        System.err.println();
         return extsentence;
     }
     
