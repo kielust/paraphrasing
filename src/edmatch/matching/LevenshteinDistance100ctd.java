@@ -17,6 +17,7 @@ import edmatch.data.PPPair;
 import edmatch.data.Paraphrase;
 import edmatch.data.Token;
 import java.util.ArrayList;
+import java.util.HashMap;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -38,7 +39,7 @@ public class LevenshteinDistance100ctd  {
     /** Maximal number of items compared. */
     private static final int MAX_N = 1000;
     /** Maximum number of paraphrases handled for per token */
-    private static final int MAX_PP = 501;
+    private static final int MAX_PP = 2001;
     private  final short MAX_OFFSET=50;
     /**
      * Cost array, horizontally. Here to avoid excessive allocation and garbage
@@ -51,7 +52,9 @@ public class LevenshteinDistance100ctd  {
      */
     private double[][] p = new double[MAX_PP][MAX_N + 1];
     private double[] d0=new double[MAX_N +1];
+    private double[] dp=new double[MAX_N +1];
     
+    HashMap<Integer,double[] > dold=new HashMap();
     
     int getmaxtargetsize(ArrayList<Paraphrase> p){
         int max=0;
@@ -68,6 +71,13 @@ public class LevenshteinDistance100ctd  {
                 max=p.get(i).noOfWordsSrc();
         }
         return max;
+    }
+    
+    void printd(int pind, int upto){
+        for(int i=0;i<upto;i++){
+            System.err.print(d[pind][i]+"  ");
+        }
+        System.out.println();
     }
     
     public LdPPSPair compute(Token[] s, ExtToken[] t, double [] pppenalty ) {
@@ -117,6 +127,7 @@ public class LevenshteinDistance100ctd  {
      //   int effj=0;
    //     short offset_j=0;
         short oldj=0;
+        double oldmindistance=100;
         short effj;
         short oldeffj=1;
         for (j = 1,effj=1; effj <= m || flag==true; j++,effj++) {
@@ -134,6 +145,7 @@ public class LevenshteinDistance100ctd  {
             if((j<=n)&&(!EDMatch.getUsedPPbyKey(t_j.getKey()).isEmpty())){
                 flag=true;
                 oldj=j;
+                oldmindistance=p[0][oldj];
                 oldeffj=effj;
                 alpp=EDMatch.getUsedPPbyKey(t_j.getKey());
                 maxtgt=getmaxtargetsize(alpp);
@@ -156,10 +168,9 @@ public class LevenshteinDistance100ctd  {
                     if(flag==true ){
                      int lensrc=alpp.get(pind-1).noOfWordsSrc();
                      if((oldj+lensrc-1)==j ||(oldj+lensrc-1)==n){
-                        
                         int valj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1);
                         d0[valj]=d[0][valj];
-                    
+                        dold.put(lensrc,d[0]);
                     }
                  }
                     /////////////////////////////
@@ -197,9 +208,13 @@ public class LevenshteinDistance100ctd  {
                  
                  
                 if(flag==false){targetsentencematch[matchindex++]=t_jp;} //target sentence matched in calculation of edit distance
+                if(maxtscount==1 && pind==0 && flag==true)dp=d[0];
              }else{
                  d[pind]=p[pind]; //copy previous value
+                 if(maxtscount==1 && pind==0 && flag==true)dp=d[0];
              }
+          //   System.err.println("\n"+t_jp.getText()+" j="+j+" pind:"+pind);
+          //   printd(pind, 30);
             }
             if((maxts!=0 )&& (maxts==maxtscount)){//condition changed on 15:09, 5 feb 14, changed on 7 feb 18:13 
                 int ind=0;
@@ -208,28 +223,36 @@ public class LevenshteinDistance100ctd  {
                 int validj;//= (effj>n)? n :effj;
                 //mindistance= (j<=m && j<=n) ? d[0][j] : d[0][m];  //why m
                // mindistance=d[0][validj];
+                int len=0;
                 boolean ppwin=false;
                 for(int pind=1; pind<noiter;pind++){                    
                     int lenpp=alpp.get(pind-1).noOfWordsPP();
                     validj=( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1); 
-                    if(d[pind][validj]<=mindistance){
+                    if(d[pind][validj]<mindistance || (d[pind][validj]==mindistance && lenpp>=len)){
                         mindistance=d[pind][validj];
                         ind=pind;
+                        len=lenpp;
                         ppwin=true;
                  //       offset_j=offset[pind];
                     }
                     int lensrc=alpp.get(pind-1).noOfWordsSrc();
                     validj=( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1); 
-                    if(d0[validj]<=mindistance){
+                    if(d0[validj]<=mindistance || (d0[validj]==mindistance && lensrc>=len) ){
                         mindistance=d0[validj];
                         ind=pind;
                         ppwin=false;
+                        len=lensrc;
                 //        offset_j=0;
                     }
                 }
                 if(ppwin){
                         d[0]=d[ind];
-                    Paraphrase pp=alpp.get(ind-1);
+                        int lensrc=alpp.get(ind-1).noOfWordsSrc();
+                        int lenpp=alpp.get(ind-1).noOfWordsPP();
+                        System.err.println("Lensrc:"+lensrc+"  \t Lenpp:"+lenpp);
+                        System.err.println("ppwin because: ed is "+d0[( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1)]);
+                       System.err.println("and pp is "+d[ind][( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1)]);
+                        Paraphrase pp=alpp.get(ind-1);
                     PPPair pppair=new PPPair(pp,j-maxts); 
                     ppusedinsentence.add(pppair);
               //      for(int k=j+p_off_j-maxts;k<j+p_off_j && k<n ;k++){
@@ -246,14 +269,31 @@ public class LevenshteinDistance100ctd  {
                     j=(short)(oldj-1+alpp.get(ind-1).noOfWordsPP());
 
                    // if(offset_j<0)effj=effj+offset_j;
-                }else{
-                
+                }else if(oldmindistance==mindistance && len==maxsrc){
+                /// get ind for which it was same and maximum length no change in d needed 
                 for(int k=0;k<maxsrc;k++){
                         targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
                     }
                 j=(short)(oldj-1+maxsrc);
                 effj=(short)(oldeffj-1+maxsrc);
                                 
+                }else if(oldmindistance==mindistance){
+                /// get ind for which it was same 
+                    d[0]=dold.get(len);
+                    for(int k=0;k<len;k++){
+                            targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
+                        }
+                    j=(short)(oldj-1+len);
+                    effj=(short)(oldeffj-1+len);
+                                
+                }else{
+                    d[0]=dp;
+                    for(int k=0;k<1;k++){
+                        targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
+                    }
+                j=(short)(oldj-1+1);
+                effj=(short)(oldeffj-1+1);                
+                    
                 }
                 maxtscount=1;
                 flag=false;

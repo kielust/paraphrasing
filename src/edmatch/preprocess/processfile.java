@@ -38,7 +38,7 @@ public class processfile {
         FileWriter fw= new FileWriter(ofile);
         while(sc.hasNextLine()){
             String sentence=sc.nextLine();
-            String s=Placeholder.replaceNoAndMonth(sentence);
+            String s=InversePlaceholder.replaceNoAndMonth(sentence);
             fw.write(s+'\n');           
         }
          sc.close();
@@ -80,7 +80,7 @@ public class processfile {
     }
     
     public static void main(String args[]){
-        processfile pf= new processfile("//Users//rohit//expert//corpusparaphrase//ppdblphrasal.txt","//Users//rohit//expert//corpusparaphrase//ppdblphrasal.prepfil.txt", "pp");
+        processfile pf= new processfile("//Users//rohit//expert//programs//corpus//enfr2013releaseutf8.en.fil.txt.r25000","//Users//rohit//expert//programs//corpus//enfr2013releaseutf8.en.fil.txt.r25000.NIPH");
       // processfile pf= new processfile("//Users//rohit//expert//programs//corpus//stest//enfr2013releaseutf8.en.fil.txt.r25000","//Users//rohit//expert//programs//corpus//stest//enfr2013releaseutf8.en.prepfil.txt.r25000");
 
     }

@@ -193,13 +193,14 @@ public class EDMatch {
                     int maxmatchid=-1;
                     LdPPSPair bestmatch=new LdPPSPair();
                     index=0;
-                    //System.out.print("Processing:");
-                    int tmsno=0;
+                    System.err.print("Processing:");
+                  //  int tmsno=0;
                     double [] pppenalty=new double[4];
                     for(SentencePP tmsen:topmatches){
-                        System.err.print(++tmsno+"=");
+//                        System.err.print(++tmsno+"=");
                         LdPPSPair ldpair;
                         double sim;
+                            System.err.print(" "+thmatches.get(index).index);
                             LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
                             ldpair = dc.compute(sen,tmsen.get(),pppenalty);
                             if(ldpair==null)continue;
@@ -241,8 +242,7 @@ public class EDMatch {
                     fw.write("</match>\n");
                     fw.write("<paraphrases>");
                     for(PPPair item : bestmatch.getMatchedParaphrases()){
-                        fw.write("<pp index=\"");
-                        fw.write(item.getLocation()+"\""+" text=\""+item.getParaphrase().getleft()+"\" "+"para=\""+item.getParaphrase().getright()+"\"");
+                        fw.write("<pp index=\""+item.getLocation()+"\""+" type=\""+item.getParaphrase().getType()+"\""+" text=\""+item.getParaphrase().getleft()+"\" "+"para=\""+item.getParaphrase().getright()+"\"");
                         fw.write("/>");
                     }
                     fw.write("</paraphrases>\n");
@@ -985,7 +985,7 @@ public class EDMatch {
         double beamTH=35.0;
         double tmTH=70.0;
         short [] typp={1,2,3,4};
-      /*  
+  /*     
         args=new String[22];
         args[0]="-bth";
         args[1]="35.0";
@@ -998,18 +998,19 @@ public class EDMatch {
         args[8]="-pp";
         args[9]="//Users//rohit//expert//corpusparaphrase//ppdbllexlphrasal.txt";
         args[10]="-tms";
-        args[11]="//Users//rohit//expert//programs//corpus//test12//2011.en.txt";
+        args[11]="//Users//rohit//expert//programs//corpus//test13//2011.en.txt";
         args[12]="-tmt";
-        args[13]="//Users//rohit//expert//programs//corpus//test12//2011.fr.txt";
+        args[13]="//Users//rohit//expert//programs//corpus//test13//2011.fr.txt";
         args[14]="-ins";
-        args[15]="//Users//rohit//expert//programs//corpus//test12//2013.en.txt";
+        args[15]="//Users//rohit//expert//programs//corpus//test13//2013.en.txt";
         args[16]="-int";
-        args[17]="//Users//rohit//expert//programs//corpus//test12//2013.fr.txt";
+        args[17]="//Users//rohit//expert//programs//corpus//test13//2013.fr.txt";
         args[18]="-o";
-        args[19]="//Users//rohit//expert//programs//corpus//test12//2013tmp.xml";
+        args[19]="//Users//rohit//expert//programs//corpus//test13//2013tmp.xml";
         args[20]="-typp";
-        args[21]="1,2";
-       */
+        args[21]="1,2,3,4";
+       // args[22]="-pholder";
+      */  
         for(int i=0;i<args.length;i++){
             
            // System.err.println("Processing:"+args[i]);
