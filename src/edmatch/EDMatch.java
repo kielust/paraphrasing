@@ -8,6 +8,7 @@ package edmatch;
 
 import edmatch.data.PPPair;
 import edmatch.data.ExtToken;
+import edmatch.data.ExtTokenPP;
 import edmatch.data.Token;
 import edmatch.data.LdPPSPair;
 import edmatch.data.Match;
@@ -15,7 +16,7 @@ import edmatch.data.Paraphrase;
 //import edmatch.matching.LevenshteinDistancePPall;
 import edmatch.matching.LevenshteinDistance;
 //import edmatch.matching.LevenshteinDistance100;
-import edmatch.matching.LevenshteinDistance100ctd;
+import edmatch.matching.LevenshteinDistanceGlobal;
 //import edmatch.matching.LevenshteinDistance200;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -39,13 +40,24 @@ public class EDMatch {
      * @param cand
      */
     
-   static  HashMap<String , ArrayList<Paraphrase> > usedPP=null;
+   static  HashMap<String , ExtTokenPP > usedPhrasalPP=null;
+   static  HashMap<String , HashMap<String, Double> > usedLexicalPP=null;
     
-   public static ArrayList<Paraphrase> getUsedPPbyKey(String key){
+   public static ExtTokenPP getUsedPhrasalPPbyKey(String key){
        if(key==null)return null;
-        return usedPP.get(key);
+        return usedPhrasalPP.get(key);
     
     }
+   
+   public static HashMap<String, Double> getUsedLexicalPPbyKey(String key){
+     //  if(key==null)return null;
+        return usedLexicalPP.get(key);
+    
+    }
+   
+   public static boolean isLexicalPP(String key){
+       return usedLexicalPP.containsKey(key);
+   }
     public static double calcSimilarity(final Token[] str,
             final Token cand[]) {
         LevenshteinDistance dc= new LevenshteinDistance();
@@ -201,7 +213,7 @@ public class EDMatch {
                         LdPPSPair ldpair;
                         double sim;
                             System.err.print(" "+thmatches.get(index).index);
-                            LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
+                            LevenshteinDistanceGlobal dc= new LevenshteinDistanceGlobal();
                             ldpair = dc.compute(sen,tmsen.get(),pppenalty);
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
@@ -214,16 +226,17 @@ public class EDMatch {
                             bestmatch=ldpair;
                             
                         }
-                        if(thmatches.get(index).sim>tmTH){
-                                m.add(new Match(tmsen.get(),thmatches.get(index).index, thmatches.get(index).sim));
-                            }
+                        
                         if(sim>tmTH){
                             m.add(new Match(tmsen.get(),thmatches.get(index).index, sim,ldpair));
                         }
+                        if(thmatches.get(index).sim>tmTH){
+                                m.add(new Match(tmsen.get(),thmatches.get(index).index, thmatches.get(index).sim));
+                            }
                         index++;
                         
                     }                   
-                    
+                    m.SortAndReverse();//think
                     fw.write("<segment id=\""+sno+"\">");
                     fw.write("<input>");
                     for (Token sen1 : sen) {
@@ -273,8 +286,9 @@ public class EDMatch {
                         prevscore=thmatches.get(0).sim;
                         fw.write(french);
                     }
+                    String sprevscore=Math.round(prevscore*100.0)/100.0 + "";
                     fw.write("</prevretvd>\n");
-                    fw.write("<prevretvd lang=\"EN\" id=\""+id+"\" prevscore=\""+prevscore+"\">");
+                    fw.write("<prevretvd lang=\"EN\" id=\""+id+"\" prevscore=\""+sprevscore+"\">");
                     if(!topmatches.isEmpty()){
                             SentencePP spp=topmatches.get(0);
                             ExtToken [] english=spp.get();
@@ -287,7 +301,7 @@ public class EDMatch {
                     fw.write("<edmatches>");
                     for(Match mch:m.getMatches()){
                         if(!mch.isppApplied()){
-                            fw.write("<edmatch id=\""+mch.getId()+"\" score=\""+mch.similarity()+"\" >");
+                            fw.write("<edmatch id=\""+mch.getId()+"\" score=\""+Math.round(mch.similarity()*100.0)/100.0+"\" >");
                             for (ExtToken edMatch : mch.getEDMatch()) {
                                 fw.write(edMatch.getToken().getText()+" ");
                             }
@@ -301,7 +315,7 @@ public class EDMatch {
                     fw.write("<ppmatches>");
                     for( Match mch: m.getMatches()){
                         if(mch.isppApplied()){
-                           fw.write("<ppmatch id=\""+mch.getId()+"\" score=\""+mch.similarity()+"\" >");
+                           fw.write("<ppmatch id=\""+mch.getId()+"\" score=\""+Math.round(mch.similarity()*100.0)/100.0+"\" >");
                            for (ExtToken ppMatch : mch.getPPMatch()) {
                                 fw.write(ppMatch.getToken().getText()+" ");
                             }
@@ -312,6 +326,13 @@ public class EDMatch {
                         }
                     }
                     fw.write("</ppmatches>\n");
+                    fw.write("<ranking>");
+                    for( Match mch: m.getMatches()){
+                        if(mch.isppApplied()){
+                            fw.write(1+" ");
+                        }else fw.write(0+" ");
+                    }
+                    fw.write("</ranking>");
                     fw.write("</thmatches>\n");
                     fw.write("</segment>\n");               
                   } 
@@ -611,7 +632,7 @@ public class EDMatch {
                         System.err.print(++tmsno+"=");
                         LdPPSPair ldpair;
                         double sim;
-                            LevenshteinDistance100ctd dc= new LevenshteinDistance100ctd();
+                            LevenshteinDistanceGlobal dc= new LevenshteinDistanceGlobal();
                             ldpair = dc.compute(sen,tmsen.get(),pppenalty);
                             if(ldpair==null)continue;
                             sim=calcSimilarityPP(sen.length,ldpair.length(),ldpair.getEditDistance());
@@ -916,7 +937,8 @@ public class EDMatch {
         // Paraphrase translation memory
         ParaphraseTM cspp=new ParaphraseTM(tmsrctokens,ppdict, types);
         ArrayList<SentencePP> alspp=cspp.getSentencePP();
-        usedPP=cspp.getUsedPPDictionary();
+        usedPhrasalPP=cspp.getUsedPhrasalPPDictionary();
+        usedLexicalPP=cspp.getUsedLexicalPPDictionary();
         // delete PP dictionary
         ppdict.clear();
         System.err.println("alspp finished");
@@ -985,7 +1007,7 @@ public class EDMatch {
         double beamTH=35.0;
         double tmTH=70.0;
         short [] typp={1,2,3,4};
-  /*     
+    /*   
         args=new String[22];
         args[0]="-bth";
         args[1]="35.0";
@@ -1010,7 +1032,7 @@ public class EDMatch {
         args[20]="-typp";
         args[21]="1,2,3,4";
        // args[22]="-pholder";
-      */  
+      */ 
         for(int i=0;i<args.length;i++){
             
            // System.err.println("Processing:"+args[i]);

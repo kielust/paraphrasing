@@ -61,8 +61,8 @@ public class MatchStoreTest {
         System.out.println("getMatches");
         MatchStore instance = null;
         ArrayList expResult = null;
-        ArrayList result = instance.getMatches();
-        assertEquals(expResult, result);
+      //  ArrayList result = instance.getMatches();
+       // assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }

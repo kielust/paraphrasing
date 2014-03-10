@@ -6,6 +6,7 @@
 
 package edmatch;
 import edmatch.data.ExtToken;
+import edmatch.data.ExtTokenPP;
 import edmatch.data.Paraphrase;
 import edmatch.data.Token;
 import edmatch.data.ppType;
@@ -21,7 +22,8 @@ import java.util.HashMap;
  */
 public class ParaphraseTM {
     ArrayList<SentencePP> spplist=new ArrayList();
-    HashMap<String, ArrayList<Paraphrase>> usedPP=new HashMap();
+    HashMap<String, ExtTokenPP> usedPhrasalPP=new HashMap();
+    HashMap<String, HashMap<String, Double> > usedLexicalPP=new HashMap();
     private static final  int LIMIT=2000;  // limit on maximum paraphrases per token
     
     ParaphraseTM(ArrayList<Token []> sentences, HashMap<String, ArrayList<String>> ppdict, short [] types){
@@ -31,15 +33,27 @@ public class ParaphraseTM {
             SentencePP spp=new SentencePP(sext);
             spplist.add(spp);
         }
-        
-          for(String  ke:usedPP.keySet()){
-            System.err.print("KEY:"+ke);
-           for(Paraphrase pp: usedPP.get(ke)){
-               System.err.print(" Type:"+pp.getType()+" S:"+pp.getleft()+" T:"+pp.getright()+" |");
+           System.out.println("\nType234Used:");
+          for(String  ke:usedPhrasalPP.keySet()){
+            System.out.println("KEY:"+ke);
+            ExtTokenPP extpp= usedPhrasalPP.get(ke);
+           for(Paraphrase pp: extpp.getType34PP()){
+               System.out.print(" Type:"+pp.getType()+" S:"+pp.getleft()+" T:"+pp.getright()+" |");
            }
-           System.err.println();
-        }
-      
+           System.out.println("\nType2Used:");
+           for(String pp: extpp.getType2PP().keySet()){
+               System.out.print(pp+" ");
+           }
+           System.out.println();
+           }
+          for(String key: usedLexicalPP.keySet()){
+              System.out.println("\nType1Used-Key:"+key);
+          
+              HashMap<String, Double> hmpp=usedLexicalPP.get(key);
+              for(String pp: hmpp.keySet()){
+               System.out.print(pp+" ");
+            }
+          }
     }
     ArrayList<SentencePP> getSentencePP(){
         return spplist;
@@ -185,7 +199,8 @@ public class ParaphraseTM {
                     for(String s:als){
                         ppType ppt=getType(src,s);
                //         System.err.println("SRC_getType:"+src+" para:"+s);
-                        if(isValidType(types,ppt.getType()) && aapin[i+ppt.getIndex()] <LIMIT){
+                        if(isValidType(types,ppt.getType())){
+                            if(ppt.getType()!=1 && aapin[i+ppt.getIndex()] <LIMIT){
            //             System.err.println("Type:"+ppt.getType()+" Index:"+ppt.getIndex()+" LS:"+ppt.getSrclen()+" LT:"+ppt.getTgtlen()+" S:"+ppt.getLeft()+" T:"+ppt.getRight());
                         Paraphrase pp;
                     //    if(ppt.getType()==(short)2 ){
@@ -205,7 +220,20 @@ public class ParaphraseTM {
                        //     aapin[i]=aapin[i] +1;
                            // alpp.add(pp);
                       //  }
+                     }else if(ppt.getType()==1){
+                         if(usedLexicalPP.containsKey(ppt.getLeft())){
+                            if(!usedLexicalPP.get(ppt.getLeft()).containsKey(ppt.getRight())){
+                                HashMap<String, Double> tmp=usedLexicalPP.get(ppt.getLeft());
+                                tmp.put(ppt.getRight(), Double.NaN);
+                                usedLexicalPP.put(ppt.getLeft(), tmp);
+                                }
+                          }else {
+                            HashMap<String, Double> tmp=new HashMap();
+                            tmp.put(ppt.getRight(), Double.NaN);
+                            usedLexicalPP.put(ppt.getLeft(), tmp);
+                          }                        
                      }
+                    }
                   }
                 }
             }
@@ -216,10 +244,18 @@ public class ParaphraseTM {
             System.err.print(key[i]+" ||| ");
             ArrayList<Paraphrase> alpp=new ArrayList();
            // System.err.println(aap[i].length);
+            HashMap<String, Short> pp12hmap= new HashMap();
             for(int k=0;k<aap[i].length && k<aapin[i];k++){
-                alpp.add(aap[i][k]);
+                if(aap[i][k].getType()==1){
+                    //do nothing
+                }else if(aap[i][k].getType()==2){
+                    pp12hmap.put(aap[i][k].getright(), aap[i][k].getType());
+                }else {
+                    alpp.add(aap[i][k]);
+                }
             }
-            usedPP.put(key[i], alpp);
+            ExtTokenPP extokenpp=new ExtTokenPP(alpp,pp12hmap);
+            usedPhrasalPP.put(key[i], extokenpp);
             extsentence[i]=exttk;
         }
         System.err.println();
@@ -249,13 +285,20 @@ public class ParaphraseTM {
         }
     }*/
       
-    ArrayList<Paraphrase> getUsedPPbyKey(String key){
-        return usedPP.get(key);
-    
+    ExtTokenPP getUsedPhrasalPPbyKey(String key){
+        return usedPhrasalPP.get(key);
     }
     
-    HashMap<String, ArrayList<Paraphrase> > getUsedPPDictionary(){
-        return usedPP;
+    HashMap<String, Double> getUsedLexicalPPbyKey(String key){
+        return usedLexicalPP.get(key);
+    }
+    
+    HashMap<String, ExtTokenPP > getUsedPhrasalPPDictionary(){
+        return usedPhrasalPP;
+    }
+    
+    HashMap<String, HashMap<String, Double> >  getUsedLexicalPPDictionary(){
+        return usedLexicalPP;
     }
     
 }

@@ -11,6 +11,7 @@
  */
 package edmatch.matching;
 import edmatch.data.ExtToken;
+import edmatch.data.ExtTokenPP;
 import edmatch.EDMatch;
 import edmatch.data.LdPPSPair;
 import edmatch.data.PPPair;
@@ -23,7 +24,7 @@ import java.util.HashMap;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-public class LevenshteinDistance100ctd  {
+public class LevenshteinDistanceGlobal  {
 
     /**
      * Get minimum of three values
@@ -132,8 +133,15 @@ public class LevenshteinDistance100ctd  {
         short oldeffj=1;
         for (j = 1,effj=1; effj <= m || flag==true; j++,effj++) {
        //     effj++;
-      //      offset_j=0;             
-            if(effj<=m)t_j = t[effj - 1];
+      //      offset_j=0;   
+            HashMap<String, Double> type1pp=new HashMap();
+            HashMap<String, Short> type2pp=new HashMap();
+            
+            if(effj<=m){
+                t_j = t[effj - 1];
+                if(EDMatch.isLexicalPP(t_j.getToken().getText()))type1pp=EDMatch.getUsedLexicalPPbyKey(t_j.getToken().getText());
+                type2pp=EDMatch.getUsedPhrasalPPbyKey(t_j.getKey()).getType2PP();
+            }
             else t_j=new ExtToken(new Token("DUMMY",1));  //0 offset for valid token
             for(int k=0;k<MAX_PP;k++)
                 d[k][0] = (short)j;
@@ -142,12 +150,12 @@ public class LevenshteinDistance100ctd  {
                 noiter=1; //reset
             //    t_jpext=null; 
                 maxtscount=1;
-            if((j<=n)&&(!EDMatch.getUsedPhrasalPPbyKey(t_j.getKey()).isEmpty())){
+                alpp=EDMatch.getUsedPhrasalPPbyKey(t_j.getKey()).getType34PP();    
+            if((j<=n)&&(!alpp.isEmpty())){
                 flag=true;
                 oldj=j;
                 oldmindistance=p[0][oldj];
                 oldeffj=effj;
-                alpp=EDMatch.getUsedPhrasalPPbyKey(t_j.getKey()).getType34PP();
                 maxtgt=getmaxtargetsize(alpp);
                 maxsrc=getmaxsourcesize(alpp);
                 maxts=Math.max(maxtgt, maxsrc);
@@ -197,14 +205,29 @@ public class LevenshteinDistance100ctd  {
                  for (i = 1; i <= n; i++) {
                     s_i = s[i - 1];
                     cost = s_i.equals(t_jp) ? (short) 0 : (short) 1;
-                  //  if(typep!=0 && cost==0){cost=cost+pppenalty[typep];}
+                  if(pind==0){  
+                    boolean istype2ppexist=false;                    
+                    if(cost==(short)1  && !type2pp.isEmpty())istype2ppexist=type2pp.containsKey(s_i.getText());
+                    if(istype2ppexist)cost=(short)0;
+                    boolean istype1ppexist=false;
+                    if(cost==(short)1 && !type1pp.isEmpty())istype1ppexist=type1pp.containsKey(s_i.getText());
+                    if(istype1ppexist)cost=(short)0;
+                    ///storing pp used ///
+                    if(istype1ppexist){
+                        ppusedinsentence.add(new PPPair(new Paraphrase(t_jp.getText(),s_i.getText(),0,(short)1),j));
+                    }else if(istype2ppexist){
+                        ppusedinsentence.add(new PPPair(new Paraphrase(t_jp.getText(),s_i.getText(),0,(short)2),j));
+                    }
+                  //  System.out.println("type2:"+istype2ppexist+" type1:"+istype1ppexist+" cost:"+cost+" si:"+s_i.getText()+" tjp:"+t_jp.getText());
+                    }
+                    //  if(typep!=0 && cost==0){cost=cost+pppenalty[typep];}
                     // minimum of cell to the left+1, to the top+1, diagonally left
                     // and up +cost
                     if(maxtscount==1)d[pind][i] = minimum(d[pind][i - 1] + 1, p[0][i] + 1, p[0][i - 1] + cost); //use p of basic 
                     else d[pind][i] = minimum(d[pind][i - 1] + 1, p[pind][i] + 1, p[pind][i - 1] + cost);   //use p of pp
                 //    System.out.print(s_i.getText()+" "+t_jp.getText()+" "+d[pind][i]+"\t");
                 }
-               // System.out.println();
+              //  System.out.println();
                  
                  
                 if(flag==false){targetsentencematch[matchindex++]=t_jp;} //target sentence matched in calculation of edit distance
@@ -249,12 +272,11 @@ public class LevenshteinDistance100ctd  {
                         d[0]=d[ind];
                         int lensrc=alpp.get(ind-1).noOfWordsSrc();
                         int lenpp=alpp.get(ind-1).noOfWordsPP();
-                        System.err.println("Lensrc:"+lensrc+"  \t Lenpp:"+lenpp);
-                        System.err.println("ppwin because: ed is "+d0[( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1)]);
-                       System.err.println("and pp is "+d[ind][( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1)]);
-                        Paraphrase pp=alpp.get(ind-1);
-                    PPPair pppair=new PPPair(pp,j-maxts); 
-                    ppusedinsentence.add(pppair);
+                 //       System.err.println("Lensrc:"+lensrc+"  \t Lenpp:"+lenpp);
+                  //      System.err.println("ppwin because: ed is "+d0[( (oldj+lensrc-1)>n ) ? n: (oldj+lensrc-1)]);
+                  //     System.err.println("and pp is "+d[ind][( (oldj+lenpp-1)>n ) ? n: (oldj+lenpp-1)]);
+                       
+                    ppusedinsentence.add(new PPPair(alpp.get(ind-1),j-maxts));
               //      for(int k=j+p_off_j-maxts;k<j+p_off_j && k<n ;k++){
                        // Token temp=targetsentencematch.get(ind).get(k);
              //           targetsentencematch[0][k]=targetsentencematch[ind][k];
@@ -271,11 +293,11 @@ public class LevenshteinDistance100ctd  {
                    // if(offset_j<0)effj=effj+offset_j;
                 }else if(oldmindistance==mindistance && len==maxsrc){
                 /// get ind for which it was same and maximum length no change in d needed 
-                for(int k=0;k<maxsrc;k++){
-                        targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
-                    }
-                j=(short)(oldj-1+maxsrc);
-                effj=(short)(oldeffj-1+maxsrc);
+                    for(int k=0;k<maxsrc;k++){
+                            targetsentencematch[matchindex++]=t[oldeffj-1+k].getToken();                        
+                        }
+                    j=(short)(oldj-1+maxsrc);
+                    effj=(short)(oldeffj-1+maxsrc);
                                 
                 }else if(oldmindistance==mindistance){
                 /// get ind for which it was same 

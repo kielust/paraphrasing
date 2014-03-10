@@ -8,14 +8,16 @@ package edmatch;
 
 import edmatch.data.Token;
 import java.util.ArrayList;
+import java.util.List;
 import edmatch.data.Match;
+import java.util.Collections;
 
 /**
  *
  * @author rohit
  */
 public class MatchStore {
-    ArrayList<Match> matches= new ArrayList();
+    List<Match> matches= new ArrayList();
     Token [] cand;
     MatchStore(Token [] cand){
         cand= new Token[cand.length+1];
@@ -24,7 +26,7 @@ public class MatchStore {
    public void add(Match target){
         matches.add(target);
     }
-   public ArrayList<Match> getMatches(){
+   public List<Match> getMatches(){
        return matches;
    }
    public boolean hasMatches(){
@@ -32,5 +34,11 @@ public class MatchStore {
    }
    public boolean hasNoMatches(){
        return matches.isEmpty();
+   }
+   
+   public List<Match> SortAndReverse(){
+       Collections.sort(matches);
+       Collections.reverse(matches);
+       return matches;
    }
 }

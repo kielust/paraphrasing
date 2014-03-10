@@ -11,7 +11,7 @@ import java.util.ArrayList;
  *
  * @author rohit
  */
-public class Match {
+public class Match implements Comparable<Match>{
     private final ExtToken [] match;
    // private ExtToken [] edmatch;
     private final double similarity;
@@ -19,6 +19,7 @@ public class Match {
     private final boolean isppused;
     private final boolean isppapplied;
     private final LdPPSPair ldpp;
+    
     
     public Match(ExtToken [] ppmatch,int id, double similarity, LdPPSPair ldpp){
         this.match=ppmatch;
@@ -38,6 +39,11 @@ public class Match {
         isppapplied=false;
         ldpp=null;
     }
+   
+   @Override
+   public int compareTo(Match other){
+        return Double.valueOf(this.similarity).compareTo(other.similarity);
+   }
    public int getId(){
        return id;
    }
