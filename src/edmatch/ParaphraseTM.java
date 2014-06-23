@@ -33,25 +33,25 @@ public class ParaphraseTM {
             SentencePP spp=new SentencePP(sext);
             spplist.add(spp);
         }
-           System.out.println("\nType234Used:");
+    //       System.out.println("\nType234Used:");
           for(String  ke:usedPhrasalPP.keySet()){
-            System.out.println("KEY:"+ke);
+    //        System.out.println("KEY:"+ke);
             ExtTokenPP extpp= usedPhrasalPP.get(ke);
            for(Paraphrase pp: extpp.getType34PP()){
-               System.out.print(" Type:"+pp.getType()+" S:"+pp.getleft()+" T:"+pp.getright()+" |");
+      //         System.out.print(" Type:"+pp.getType()+" S:"+pp.getleft()+" T:"+pp.getright()+" |");
            }
-           System.out.println("\nType2Used:");
+      //     System.out.println("\nType2Used:");
            for(String pp: extpp.getType2PP().keySet()){
-               System.out.print(pp+" ");
+      //         System.out.print(pp+" ");
            }
-           System.out.println();
+      //     System.out.println();
            }
           for(String key: usedLexicalPP.keySet()){
-              System.out.println("\nType1Used-Key:"+key);
+      //        System.out.println("\nType1Used-Key:"+key);
           
               HashMap<String, Double> hmpp=usedLexicalPP.get(key);
               for(String pp: hmpp.keySet()){
-               System.out.print(pp+" ");
+       //        System.out.print(pp+" ");
             }
           }
     }
