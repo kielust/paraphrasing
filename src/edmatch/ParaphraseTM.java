@@ -262,28 +262,6 @@ public class ParaphraseTM {
         return extsentence;
     }
     
-  /*  void sentencePP(Token [] sentence, HashMap<String,ArrayList<String>> ppdict,boolean flag ){
-        ExtToken [] extsentence;
-        extsentence=new ExtToken[sentence.length];
-        Paraphrase [][]aap=new Paraphrase[sentence.length][LIMIT];
-        for(int i=0;i<sentence.length;i++){
-            String src="";
-            ArrayList<Paraphrase> alpp=new ArrayList();                    
-            for(int j=i;j<sentence.length;j++){
-                src=src+" "+sentence[j].getText();
-                src=src.trim();
-                if(ppdict.containsKey(src)){
-                    ArrayList<String> als=ppdict.get(src);
-                    for(String s:als){
-                        Paraphrase pp=new Paraphrase(src,s,i);
-                        alpp.add(pp);
-                    }
-                }
-            }
-            ExtToken exttk=new ExtToken(sentence[i],alpp);
-            extsentence[i]=exttk;
-        }
-    }*/
       
     ExtTokenPP getUsedPhrasalPPbyKey(String key){
         return usedPhrasalPP.get(key);
